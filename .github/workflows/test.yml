@@ -1,0 +1,40 @@
+name: CI
+
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ⎔ Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: ⎔ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 📥 Install dependencies
+        run: pnpm install --ignore-scripts --frozen-lockfile
+
+      - name: 🔍 Type Check
+        run: pnpm run typecheck
+
+      - name: 🧪 Test
+        run: pnpm run test
+
+      - name: 📊 Report Coverage
+        if: always()
+        uses: davelosert/vitest-coverage-report-action@v2
+        with:
+          pr-number: auto

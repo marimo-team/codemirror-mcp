@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>codemirror-mcp demo</title>
+    <meta name="description" content="A CodeMirror MCP extension" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="demo.css" />
+  </head>
+  <body>
+    <main class="max-w-3xl mx-auto px-4 py-8">
+      <h1 class="text-4xl font-bold mb-4">
+        <a href="https://github.com/marimo-team/codemirror-mcp" class="text-blue-600 hover:text-blue-800"
+          >codemirror-mcp</a
+        >
+      </h1>
+      <p class="mb-2">by <a href="https://marimo.io/" class="text-blue-600 hover:text-blue-800">marimo</a></p>
+      <p class="mb-8 text-gray-700">
+        codemirror-mcp is an extension for
+        <a href="https://codemirror.net/" class="text-blue-600 hover:text-blue-800"> CodeMirror 6 </a> that adds
+        autocomplete support for
+        <a href="https://modelcontextprotocol.io/" class="text-blue-600 hover:text-blue-800">ModelContextProtocol</a>.
+      </p>
+      <h2 class="text-2xl font-bold mb-4">Demo</h2>
+
+      <div class="border rounded-lg p-4 bg-white shadow-sm">
+        <div id="editor" class="min-h-[200px]"></div>
+      </div>
+    </main>
+    <script type="module" src="./index.ts"></script>
+  </body>
+</html>

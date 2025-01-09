@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ⎔ Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: ⎔ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+          cache: pnpm
+
+      - name: 📥 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔍 Type Check
+        run: pnpm run typecheck
+
+      - name: 🧪 Test
+        run: pnpm run test
+
+      - name: 🏗️ Build
+        run: pnpm run build
+
+      - name: 📦 Validate build artifacts
+        run: |
+          # Check if dist directory exists
+          if [ ! -d "dist" ]; then
+            echo "❌ dist directory is missing but declared in package.json"
+            exit 1
+          fi
+
+          # Check if dist contains files
+          if [ -z "$(ls -A dist)" ]; then
+            echo "❌ dist directory is empty"
+            exit 1
+          fi
+
+          # Check for index.js and index.d.ts
+          if [ ! -f "dist/index.js" ] || [ ! -f "dist/index.d.ts" ]; then
+            echo "❌ Missing required files in dist/"
+            echo "Required: index.js and index.d.ts"
+            echo "Found: $(ls dist)"
+            exit 1
+          fi
+
+          echo "✅ Build artifacts validation passed"
+
+      - name: 📦 Publish to NPM
+        run: pnpm publish --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
