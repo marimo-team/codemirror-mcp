@@ -2,6 +2,9 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@marimo-team/codemirror-mcp",
   "version": "0.1.1",
+	"publishConfig": {
+		"access": "public"
+	},
   "description": "CodeMirror plugin for Model Context Provider",
   "sideEffects": false,
   "repository": {
