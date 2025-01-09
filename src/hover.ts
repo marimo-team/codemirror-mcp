@@ -1,4 +1,4 @@
-import { type Tooltip, type TooltipView, hoverTooltip } from "@codemirror/view";
+import { type TooltipView, hoverTooltip } from "@codemirror/view";
 import type { Resource } from "@modelcontextprotocol/sdk/types.js";
 import { resourcesField } from "./state.js";
 import { matchAllURIs } from "./utils.js";
@@ -42,7 +42,7 @@ export function findResourceAtPosition(
 	lineStart = 0,
 ): ResourceMatch | null {
 	for (const match of matchAllURIs(text)) {
-		const start = lineStart + match.index!;
+		const start = lineStart + match.index;
 		const end = start + match[0].length;
 
 		if (pos >= start && pos <= end) {

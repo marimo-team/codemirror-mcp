@@ -8,8 +8,8 @@ import {
 	WidgetType,
 } from "@codemirror/view";
 import type { Resource } from "@modelcontextprotocol/sdk/types.js";
-import { resourceClickHandlerField, resourcesField, updateResources } from "./state.js";
-import { URI_PATTERN, matchAllURIs } from "./utils.js";
+import { mcpOptionsField, resourcesField, updateResources } from "./state.js";
+import { matchAllURIs } from "./utils.js";
 
 // Widget for resource decoration
 class ResourceWidget extends WidgetType {
@@ -30,13 +30,32 @@ class ResourceWidget extends WidgetType {
 		wrap.textContent = `@${this.resource.name}`;
 		wrap.title = this.resource.uri;
 
-		const clickHandler = this.view.state.field(resourceClickHandlerField, false);
-		if (clickHandler) {
+		const mcpOptions = this.view.state.field(mcpOptionsField, false);
+		const onResourceClick = mcpOptions?.onResourceClick;
+		const onResourceMouseOver = mcpOptions?.onResourceMouseOver;
+		const onResourceMouseOut = mcpOptions?.onResourceMouseOut;
+
+		if (onResourceClick) {
 			wrap.style.cursor = "pointer";
 			wrap.addEventListener("click", (e) => {
 				e.preventDefault();
 				e.stopPropagation();
-				clickHandler(this.resource);
+				onResourceClick(this.resource);
+			});
+		}
+
+		if (onResourceMouseOver) {
+			wrap.addEventListener("mouseover", (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				onResourceMouseOver(this.resource);
+			});
+		}
+		if (onResourceMouseOut) {
+			wrap.addEventListener("mouseout", (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				onResourceMouseOut(this.resource);
 			});
 		}
 
@@ -51,10 +70,9 @@ function createResourceDecorations(view: EditorView): DecorationSet {
 
 	for (const { from, to } of view.visibleRanges) {
 		const text = view.state.doc.sliceString(from, to);
-		const matches = matchAllURIs(text);
 
-		for (const match of matches) {
-			const start = from + match.index!;
+		for (const match of matchAllURIs(text)) {
+			const start = from + match.index;
 			const uri = match[0].slice(1); // Remove @ prefix
 			const resource = resources.get(uri);
 

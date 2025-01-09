@@ -6,8 +6,8 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"ignoreUnknown": true,
-		"ignore": ["**/dist/**", "**/coverage/**", "**/demo/**", "**/scripts/**", "**/test/**"]
+		"ignore": ["package.json"],
+		"ignoreUnknown": true
 	},
 	"formatter": {
 		"enabled": true,
@@ -22,7 +22,6 @@
 		"rules": {
 			"recommended": true,
 			"style": {
-				"noNonNullAssertion": "off",
 				"useConst": "error"
 			},
 			"suspicious": {

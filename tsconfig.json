@@ -9,6 +9,8 @@
 		"module": "nodenext",
 		"moduleResolution": "nodenext",
 		"noUncheckedIndexedAccess": true,
+		"noUnusedLocals": true,
+		"noErrorTruncation": true,
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
 		"sourceMap": true,

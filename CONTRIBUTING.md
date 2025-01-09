@@ -50,9 +50,13 @@ Types:
 
 ## Release Process
 
-1. Changes are merged to main
-2. GitHub Actions automatically runs tests
-3. Maintainers will handle versioning and publishing to npm
+For maintainers only:
+
+```bash
+git checkout main
+git pull
+npx bumpp --no-git-check=false
+```
 
 ## Questions?
 

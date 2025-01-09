@@ -1,6 +1,7 @@
 import type { Resource } from "@modelcontextprotocol/sdk/types.js";
 import { describe, expect, test } from "vitest";
 import { type ResourceMatch, createTooltip, findResourceAtPosition } from "../hover";
+import { invariant } from "../utils";
 
 describe("hover", () => {
 	const sampleResources = new Map<string, Resource>([
@@ -80,7 +81,8 @@ describe("hover", () => {
 
 	describe("createTooltip", () => {
 		test("should create tooltip with resource info", () => {
-			const resource = sampleResources.get("github://repo1")!;
+			const resource = sampleResources.get("github://repo1");
+			invariant(resource !== undefined, "Resource not found");
 			const tooltip = createTooltip(resource);
 
 			expect(tooltip.dom).toBeDefined();
@@ -100,7 +102,8 @@ describe("hover", () => {
 		});
 
 		test("should handle missing optional fields", () => {
-			const resource = sampleResources.get("gitlab://repo2")!;
+			const resource = sampleResources.get("gitlab://repo2");
+			invariant(resource !== undefined, "Resource not found");
 			const tooltip = createTooltip(resource);
 
 			const title = tooltip.dom.querySelector(".cm-tooltip-cursor-title");

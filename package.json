@@ -9,7 +9,7 @@
 		"url": "https://github.com/marimo-team/codemirror-mcp"
 	},
 	"scripts": {
-		"prepare": "pnpm run build",
+		"prepare": "husky install && pnpm run build",
 		"dev": "vite",
 		"typecheck": "tsc --noEmit",
 		"lint": "biome check --write",
@@ -18,20 +18,23 @@
 		"demo": "vite build",
 		"build": "tsc",
 		"prepublishOnly": "pnpm run typecheck && pnpm run test && pnpm run build",
-		"release": "pnpm version"
+		"release": "pnpm version",
+		"pre-commit": "lint-staged"
 	},
 	"keywords": ["codemirror", "codemirror-plugin", "mcp"],
 	"license": "Apache-2.0",
 	"peerDependencies": {
 		"@codemirror/autocomplete": "^6",
 		"@codemirror/state": "^6",
-		"@codemirror/view": "^6"
+		"@codemirror/view": "^6",
+		"@modelcontextprotocol/sdk": "^1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
 		"@codemirror/lang-javascript": "^6.2.2",
 		"@codemirror/lang-markdown": "^6.3.1",
 		"@codemirror/view": "^6.36.1",
+		"@modelcontextprotocol/sdk": "^1.1.0",
 		"@types/node": "^22.10.5",
 		"@uiw/codemirror-extensions-mentions": "^4.23.7",
 		"@vitest/coverage-v8": "2.1.8",
@@ -39,7 +42,9 @@
 		"jsdom": "^25.0.1",
 		"typescript": "^5.7.3",
 		"vite": "^6.0.7",
-		"vitest": "^2.1.8"
+		"vitest": "^2.1.8",
+		"husky": "^9.0.5",
+		"lint-staged": "^15.2.0"
 	},
 	"files": ["dist"],
 	"exports": {
@@ -57,7 +62,8 @@
 		"node": "*"
 	},
 	"module": "./dist/index.js",
-	"dependencies": {
-		"@modelcontextprotocol/sdk": "^1.1.0"
+	"dependencies": {},
+	"lint-staged": {
+		"*.{ts,tsx}": ["biome check --write", "biome format --write", "vitest related --run"]
 	}
 }

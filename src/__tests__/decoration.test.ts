@@ -5,7 +5,8 @@ import { EditorView } from "@codemirror/view";
 import type { Resource } from "@modelcontextprotocol/sdk/types.js";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { resourceDecorations } from "../decoration";
-import { resourceClickHandlerField, resourcesField, updateResources } from "../state";
+import { mcpOptionsField, resourcesField, updateResources } from "../state";
+import { invariant } from "../utils";
 
 // Helper function to count decorations
 function countDecorations(decos: RangeSet<Decoration>): number {
@@ -27,7 +28,7 @@ describe("resourceDecorations", () => {
 		// Create a new editor state and view for each test
 		const state = EditorState.create({
 			doc: "",
-			extensions: [resourcesField, resourceDecorations, resourceClickHandlerField.init(() => null)],
+			extensions: [resourcesField, resourceDecorations, mcpOptionsField.init(() => ({}))],
 		});
 		view = new EditorView({ state });
 	});
@@ -54,14 +55,15 @@ describe("resourceDecorations", () => {
 		// Get decorations from the plugin
 		const decorations = view.plugin(resourceDecorations)?.decorations;
 		expect(decorations).toBeDefined();
+		invariant(decorations !== undefined, "decorations should be defined");
 
 		// Count decorations
-		const count = countDecorations(decorations!);
+		const count = countDecorations(decorations);
 		expect(count).toBe(2);
 
 		// Check positions of decorations
 		const positions: number[] = [];
-		decorations!.between(0, view.state.doc.length, (from, to) => {
+		decorations.between(0, view.state.doc.length, (from, to) => {
 			positions.push(from, to);
 		});
 
@@ -87,7 +89,8 @@ describe("resourceDecorations", () => {
 		});
 
 		let decorations = view.plugin(resourceDecorations)?.decorations;
-		expect(countDecorations(decorations!)).toBe(1);
+		invariant(decorations !== undefined, "decorations should be defined");
+		expect(countDecorations(decorations)).toBe(1);
 
 		// Add second URI
 		view.dispatch({
@@ -99,7 +102,8 @@ describe("resourceDecorations", () => {
 		});
 
 		decorations = view.plugin(resourceDecorations)?.decorations;
-		expect(countDecorations(decorations!)).toBe(2);
+		invariant(decorations !== undefined, "decorations should be defined");
+		expect(countDecorations(decorations)).toBe(2);
 	});
 
 	test("should update decorations when resources change", () => {
@@ -118,7 +122,8 @@ describe("resourceDecorations", () => {
 		});
 
 		let decorations = view.plugin(resourceDecorations)?.decorations;
-		expect(countDecorations(decorations!)).toBe(2); // Only 2 resources are known
+		invariant(decorations !== undefined, "decorations should be defined");
+		expect(countDecorations(decorations)).toBe(2); // Only 2 resources are known
 
 		// Add another resource
 		const newResources = [
@@ -135,7 +140,8 @@ describe("resourceDecorations", () => {
 		});
 
 		decorations = view.plugin(resourceDecorations)?.decorations;
-		expect(countDecorations(decorations!)).toBe(3); // Now all 3 URIs should be decorated
+		invariant(decorations !== undefined, "decorations should be defined");
+		expect(countDecorations(decorations)).toBe(3); // Now all 3 URIs should be decorated
 	});
 
 	test("should handle empty document", () => {
@@ -144,7 +150,8 @@ describe("resourceDecorations", () => {
 		});
 
 		const decorations = view.plugin(resourceDecorations)?.decorations;
-		expect(countDecorations(decorations!)).toBe(0);
+		invariant(decorations !== undefined, "decorations should be defined");
+		expect(countDecorations(decorations)).toBe(0);
 	});
 
 	test("should handle document without URIs", () => {
@@ -161,7 +168,8 @@ describe("resourceDecorations", () => {
 		});
 
 		const decorations = view.plugin(resourceDecorations)?.decorations;
-		expect(countDecorations(decorations!)).toBe(0);
+		invariant(decorations !== undefined, "decorations should be defined");
+		expect(countDecorations(decorations)).toBe(0);
 	});
 
 	test("should handle unknown URIs", () => {
@@ -178,7 +186,8 @@ describe("resourceDecorations", () => {
 		});
 
 		const decorations = view.plugin(resourceDecorations)?.decorations;
-		expect(countDecorations(decorations!)).toBe(1); // Only the known URI should be decorated
+		invariant(decorations !== undefined, "decorations should be defined");
+		expect(countDecorations(decorations)).toBe(1); // Only the known URI should be decorated
 	});
 
 	test("should handle click events when handler is provided", () => {
@@ -188,7 +197,7 @@ describe("resourceDecorations", () => {
 			extensions: [
 				resourcesField,
 				resourceDecorations,
-				resourceClickHandlerField.init(() => clickHandler),
+				mcpOptionsField.init(() => ({ onResourceClick: clickHandler })),
 			],
 		});
 		view = new EditorView({ state });

@@ -1,6 +1,16 @@
 name: CI
 
-on: push
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+env:
+  CLICOLOR: 1
 
 jobs:
   test:
@@ -38,3 +48,25 @@ jobs:
         uses: davelosert/vitest-coverage-report-action@v2
         with:
           pr-number: auto
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🔍 Run CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript
+
+      - name: 🔍 Perform Analysis
+        uses: github/codeql-action/analyze@v2
+
+
+  spelling:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🔍 Spell Check Repo
+        uses: crate-ci/typos@v1.29.4

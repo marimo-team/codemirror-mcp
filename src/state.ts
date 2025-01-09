@@ -1,5 +1,5 @@
 import { StateEffect, type StateEffectType, StateField } from "@codemirror/state";
-import type { Prompt, Resource } from "@modelcontextprotocol/sdk/types.js";
+import type { Prompt, PromptMessage, Resource } from "@modelcontextprotocol/sdk/types.js";
 
 type ResourceURI = string;
 type ResourceMap = Map<ResourceURI, Resource>;
@@ -27,11 +27,21 @@ export const resourcesField: StateField<ResourceMap> = StateField.define<Resourc
 	},
 });
 
-export type ResourceClickHandler = (resource: Resource) => void;
+interface MCPHandlers {
+	onResourceClick?: (resource: Resource) => void;
+	onResourceMouseOver?: (resource: Resource) => void;
+	onResourceMouseOut?: (resource: Resource) => void;
+	onPromptSubmit?: (opts: { messages: PromptMessage[] }) => void;
+}
 
-export const resourceClickHandlerField = StateField.define<ResourceClickHandler | null>({
+export const mcpOptionsField = StateField.define<MCPHandlers>({
 	create() {
-		return null;
+		return {
+			onResourceClick: undefined,
+			onResourceMouseOver: undefined,
+			onResourceMouseOut: undefined,
+			onPromptSubmit: undefined,
+		};
 	},
 	update(value) {
 		return value;

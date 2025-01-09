@@ -8,8 +8,9 @@ import type {
 	JSONRPCMessage,
 	JSONRPCRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import { type Mock, beforeEach, describe, expect, it, vi } from "vitest";
-import { mcpExtension } from "../index";
+import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { extractResources, mcpExtension } from "../mcp";
+import { resourcesField, updateResources } from "../state";
 
 class MockTransport implements Transport {
 	onclose?: () => void;
@@ -19,6 +20,11 @@ class MockTransport implements Transport {
 	mockResources = [
 		{ name: "test1", uri: "test://1", type: "text" },
 		{ name: "test2", uri: "test://2", type: "text" },
+	];
+
+	mockPrompts = [
+		{ name: "prompt1", description: "Test prompt 1" },
+		{ name: "prompt2", description: "Test prompt 2" },
 	];
 
 	async start(): Promise<void> {}
@@ -57,6 +63,18 @@ class MockTransport implements Transport {
 					id: req.id,
 					result: {
 						resources: this.mockResources,
+					},
+				});
+			}, 0);
+		}
+
+		if (req.method === "prompts/list") {
+			setTimeout(() => {
+				this.onmessage?.({
+					jsonrpc: "2.0",
+					id: req.id,
+					result: {
+						prompts: this.mockPrompts,
 					},
 				});
 			}, 0);
@@ -183,5 +201,147 @@ describe("mcpExtension", () => {
 		expect((mockLogger.error as Mock).mock.calls[0][0]).toBe("Failed to connect to MCP server:");
 	});
 
+	it("should provide prompt completions when typing /", async () => {
+		transport.mockPrompts = [
+			{ name: "prompt1", description: "Test prompt 1" },
+			{ name: "prompt2", description: "Test prompt 2" },
+		];
+
+		const state = EditorState.create({
+			doc: "Hello /",
+			extensions: [mcpExtension({ transport, logger: mockLogger })],
+		});
+		const context = new CompletionContext(state, 7, false);
+		const handler = getCompletionHandler(state);
+		const completions = await handler(context);
+
+		expect(completions).toBeTruthy();
+		expect(completions?.from).toBe(6);
+		expect(completions?.options).toHaveLength(2);
+		expect(completions?.options[0].label).toBe("/prompt1");
+		expect(completions?.options[1].label).toBe("/prompt2");
+	});
+
+	it("should not provide prompt completions when not typing /", async () => {
+		const state = EditorState.create({
+			doc: "Hello",
+			extensions: [mcpExtension({ transport, logger: mockLogger })],
+		});
+		const context = new CompletionContext(state, 5, false);
+		const handler = getCompletionHandler(state);
+		const completions = await handler(context);
+
+		expect(completions).toBeNull();
+	});
+
+	it("should handle prompts with descriptions", async () => {
+		transport.mockPrompts = [
+			{ name: "prompt1", description: "Test prompt 1" },
+			{ name: "prompt2", description: "" },
+		];
+
+		const state = EditorState.create({
+			doc: "Hello /",
+			extensions: [mcpExtension({ transport, logger: mockLogger })],
+		});
+		const context = new CompletionContext(state, 7, false);
+		const handler = getCompletionHandler(state);
+		const completions = await handler(context);
+
+		expect(completions?.options[0].detail).toBe("Test prompt 1");
+		expect(completions?.options[0].boost).toBe(100);
+		expect(completions?.options[1].detail).toBe("");
+		expect(completions?.options[1].boost).toBe(0);
+	});
+
 	// TODO: test prompt completions
+});
+
+describe("extractResources", () => {
+	let view: EditorView;
+	let state: EditorState;
+
+	beforeEach(() => {
+		state = EditorState.create({
+			doc: "",
+			extensions: [resourcesField],
+		});
+		view = new EditorView({ state });
+	});
+
+	afterEach(() => {
+		view.destroy();
+	});
+
+	it("should extract resources from text", () => {
+		// Set up resources
+		const resources = new Map([
+			["test://1", { name: "test1", uri: "test://1", type: "text" }],
+			["test://2", { name: "test2", uri: "test://2", type: "text" }],
+		]);
+		view.dispatch({
+			changes: { from: 0, to: 0, insert: "Hello @test://1 world @test://2" },
+			effects: updateResources.of(resources),
+		});
+
+		const matches = extractResources(view);
+		expect(matches).toMatchInlineSnapshot(`
+			[
+			  {
+			    "end": 15,
+			    "resource": {
+			      "name": "test1",
+			      "type": "text",
+			      "uri": "test://1",
+			    },
+			    "start": 6,
+			  },
+			  {
+			    "end": 31,
+			    "resource": {
+			      "name": "test2",
+			      "type": "text",
+			      "uri": "test://2",
+			    },
+			    "start": 22,
+			  },
+			]
+		`);
+	});
+
+	it("should handle text without resources", () => {
+		view.dispatch({
+			changes: { from: 0, to: 0, insert: "Hello world!" },
+			effects: updateResources.of(new Map()),
+		});
+
+		const matches = extractResources(view);
+		expect(matches).toHaveLength(0);
+	});
+
+	it("should handle unknown resources", () => {
+		const resources = new Map([["test://1", { name: "test1", uri: "test://1", type: "text" }]]);
+		view.dispatch({
+			changes: { from: 0, to: 0, insert: "Hello @test://1 @unknown://2" },
+			effects: updateResources.of(resources),
+		});
+
+		const matches = extractResources(view);
+		expect(matches).toHaveLength(1);
+		expect(matches[0]).toEqual({
+			resource: resources.get("test://1"),
+			start: 6,
+			end: 15,
+		});
+	});
+
+	it("should handle empty text", () => {
+		const resources = new Map([["test://1", { name: "test1", uri: "test://1", type: "text" }]]);
+		view.dispatch({
+			effects: updateResources.of(resources),
+		});
+
+		const matches = extractResources(view);
+		expect(matches).toHaveLength(0);
+	});
 });

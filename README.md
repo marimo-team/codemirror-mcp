@@ -1,8 +1,6 @@
 # codemirror-mcp
 
-> ⚠️ **Warning**: This package is in active development and the API may change without notice.
-
-A CodeMirror extension that implements the Model Context Protocol (MCP) for enhanced code editing capabilities.
+A CodeMirror extension that implements the [Model Context Protocol](https://modelcontextprotocol.io) (MCP) for resource mentions and prompt commands.
 
 ## Features
 
@@ -14,12 +12,12 @@ A CodeMirror extension that implements the Model Context Protocol (MCP) for enha
 ## Installation
 
 ```bash
-npm install @marimo-team/codemirror-mcp
+npm install @marimo-team/codemirror-mcp @modelcontextprotocol/sdk
 # or
-pnpm add @marimo-team/codemirror-mcp
+pnpm add @marimo-team/codemirror-mcp @modelcontextprotocol/sdk
 ```
 
-## Peer Dependencies
+### Peer Dependencies
 
 This module requires the following peer dependencies:
 
@@ -30,17 +28,18 @@ This module requires the following peer dependencies:
 ## Usage
 
 ```ts
-import { mcpExtension } from '@marimo-team/codemirror-mcp';
+import { mcpExtension, extractResources } from '@marimo-team/codemirror-mcp';
 import { EditorView } from '@codemirror/view';
 
 const view = new EditorView({
   extensions: [
     // ... other extensions
+
     mcpExtension({
-      // Required
+      // Required options
       transport: yourMCPTransport,
 
-      // Optional
+      // Optional options
       logger: console,
       clientOptions: {
         name: 'your-client',
@@ -48,14 +47,34 @@ const view = new EditorView({
       },
       onResourceClick: (resource) => {
         // Open resource
+        // e.g. open in a tab, etc.
       },
-    })
+    }),
+
+    // Handle submit
+    keymap.of([
+      {
+        key: 'Enter',
+        run: () => {
+          const resources = extractResources(view);
+          const formattedResources = resources
+            .map(
+              ({ resource }) =>
+                `${resource.uri} (${resource.type}): ${resource.description || resource.name}`
+            )
+            .join('\n');
+          const prompt = `${view.state.doc.toString()}\n\nResources:\n${formattedResources}`;
+          // ... submit prompt to AI server
+          // const response = await generateText(prompt);
+        },
+      },
+    ]),
   ],
-  parent: document.querySelector('#editor')
+  parent: document.querySelector('#editor'),
 });
 ```
 
-## Resource Features
+## Resources
 
 - Use `@resource-uri` syntax to reference resources
 - Resources are visually decorated and clickable
@@ -63,7 +82,7 @@ const view = new EditorView({
 - Hover tooltips show resource details
 - Customizable theme
 
-## Prompt Features
+## Prompts
 
 - Use `/command` syntax for prompt commands
 - Autocomplete for available prompts
@@ -76,6 +95,9 @@ pnpm install
 
 # Run tests
 pnpm test
+
+# Run demo
+pnpm dev
 ```
 
 ## License
