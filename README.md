@@ -28,8 +28,11 @@ This module requires the following peer dependencies:
 ## Usage
 
 ```ts
+import { WebSocketClientTransport } from "@modelcontextprotocol/sdk/client/websocket.js";
 import { mcpExtension, extractResources } from '@marimo-team/codemirror-mcp';
 import { EditorView } from '@codemirror/view';
+
+const transport = new WebSocketClientTransport(new URL('ws://localhost:8080'));
 
 const view = new EditorView({
   extensions: [
@@ -37,7 +40,7 @@ const view = new EditorView({
 
     mcpExtension({
       // Required options
-      transport: yourMCPTransport,
+      transport: transport,
 
       // Optional options
       logger: console,
