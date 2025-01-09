@@ -1,0 +1,6 @@
+/* Style for the MCP tooltips */
+.cm-tooltip-cursor {
+  background-color: #f0f0f0;
+  padding: 4px;
+  border-radius: 4px;
+}
