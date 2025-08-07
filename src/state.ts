@@ -1,5 +1,6 @@
 import { StateEffect, type StateEffectType, StateField } from "@codemirror/state";
-import type { Prompt, PromptMessage, Resource } from "@modelcontextprotocol/sdk/types.js";
+import type { Prompt, PromptMessage } from "@modelcontextprotocol/sdk/types.js";
+import type { Resource } from "./resources/resource.js";
 
 type ResourceURI = string;
 type ResourceMap = Map<ResourceURI, Resource>;

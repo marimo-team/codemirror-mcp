@@ -9,7 +9,8 @@ import type {
 	JSONRPCRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { extractResources, mcpExtension } from "../mcp";
+import { mcpExtension } from "../mcp";
+import { extractResources } from "../resources/extract";
 import { resourcesField, updateResources } from "../state";
 
 class MockTransport implements Transport {
@@ -112,7 +113,7 @@ describe("mcpExtension", () => {
 			doc: "Hello @",
 			extensions: [
 				markdown(),
-				mcpExtension({ transport, logger: mockLogger, onClickResource: () => {} }),
+				mcpExtension({ transport, logger: mockLogger, onResourceClick: () => {} }),
 				tooltips(),
 			],
 		});
@@ -276,8 +277,8 @@ describe("extractResources", () => {
 	it("should extract resources from text", () => {
 		// Set up resources
 		const resources = new Map([
-			["test://1", { name: "test1", uri: "test://1", type: "text" }],
-			["test://2", { name: "test2", uri: "test://2", type: "text" }],
+			["test://1", { name: "test1", uri: "test://1", type: "text", data: {} }],
+			["test://2", { name: "test2", uri: "test://2", type: "text", data: {} }],
 		]);
 		view.dispatch({
 			changes: { from: 0, to: 0, insert: "Hello @test://1 world @test://2" },
@@ -290,6 +291,7 @@ describe("extractResources", () => {
 			  {
 			    "end": 15,
 			    "resource": {
+			      "data": {},
 			      "name": "test1",
 			      "type": "text",
 			      "uri": "test://1",
@@ -299,6 +301,7 @@ describe("extractResources", () => {
 			  {
 			    "end": 31,
 			    "resource": {
+			      "data": {},
 			      "name": "test2",
 			      "type": "text",
 			      "uri": "test://2",
@@ -320,7 +323,9 @@ describe("extractResources", () => {
 	});
 
 	it("should handle unknown resources", () => {
-		const resources = new Map([["test://1", { name: "test1", uri: "test://1", type: "text" }]]);
+		const resources = new Map([
+			["test://1", { name: "test1", uri: "test://1", type: "text", data: {} }],
+		]);
 		view.dispatch({
 			changes: { from: 0, to: 0, insert: "Hello @test://1 @unknown://2" },
 			effects: updateResources.of(resources),
@@ -328,15 +333,24 @@ describe("extractResources", () => {
 
 		const matches = extractResources(view);
 		expect(matches).toHaveLength(1);
-		expect(matches[0]).toEqual({
-			resource: resources.get("test://1"),
-			start: 6,
-			end: 15,
-		});
+		expect(matches[0]).toMatchInlineSnapshot(`
+			{
+			  "end": 15,
+			  "resource": {
+			    "data": {},
+			    "name": "test1",
+			    "type": "text",
+			    "uri": "test://1",
+			  },
+			  "start": 6,
+			}
+		`);
 	});
 
 	it("should handle empty text", () => {
-		const resources = new Map([["test://1", { name: "test1", uri: "test://1", type: "text" }]]);
+		const resources = new Map([
+			["test://1", { name: "test1", uri: "test://1", type: "text", data: {} }],
+		]);
 		view.dispatch({
 			effects: updateResources.of(resources),
 		});

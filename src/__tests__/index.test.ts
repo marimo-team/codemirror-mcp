@@ -6,8 +6,13 @@ describe("index.ts exports", () => {
 		const sortedExports = Object.keys(exports).sort();
 		expect(sortedExports).toMatchInlineSnapshot(`
 			[
+			  "createDefaultTooltip",
 			  "extractResources",
+			  "hoverResource",
 			  "mcpExtension",
+			  "resourceCompletion",
+			  "resourceTheme",
+			  "resourcesField",
 			]
 		`);
 	});

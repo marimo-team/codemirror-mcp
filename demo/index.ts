@@ -9,7 +9,8 @@ import type {
 	PromptMessage,
 } from "@modelcontextprotocol/sdk/types.js";
 import { EditorView, basicSetup } from "codemirror";
-import { extractResources, mcpExtension } from "../src/mcp";
+import { extractResources } from "../src";
+import { mcpExtension } from "../src/mcp";
 
 class DemoTransport implements Transport {
 	mockPrompts = [
@@ -196,7 +197,7 @@ Try typing @ to see MCP completions!
 		const formattedResources = resources
 			.map(
 				({ resource }) =>
-					`${resource.uri} (${resource.type}): ${resource.description || resource.name}`,
+					`<resource>${resource.uri} (${resource.type}): ${resource.description || resource.name}</resource>`,
 			)
 			.join("\n");
 
@@ -204,7 +205,9 @@ Try typing @ to see MCP completions!
 			prompt.textContent = "No resources found";
 		} else {
 			prompt.textContent = `
+<doc>
 ${editor.state.doc.toString()}
+</doc>
 
 Resources:
 ${formattedResources}

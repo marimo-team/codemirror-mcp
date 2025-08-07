@@ -1,7 +1,7 @@
-import type { Resource } from "@modelcontextprotocol/sdk/types.js";
 import { describe, expect, test } from "vitest";
-import { type ResourceMatch, createTooltip, findResourceAtPosition } from "../hover";
-import { invariant } from "../utils";
+import { createDefaultTooltip, findResourceAtPosition } from "../resources/hover.js";
+import type { Resource } from "../resources/resource.js";
+import { invariant } from "../utils.js";
 
 describe("hover", () => {
 	const sampleResources = new Map<string, Resource>([
@@ -13,6 +13,7 @@ describe("hover", () => {
 				type: "github",
 				description: "A sample repository",
 				mimeType: "application/x-git",
+				data: {},
 			},
 		],
 		[
@@ -21,6 +22,7 @@ describe("hover", () => {
 				name: "repo2",
 				uri: "gitlab://repo2",
 				type: "gitlab",
+				data: {},
 			},
 		],
 	]);
@@ -83,7 +85,7 @@ describe("hover", () => {
 		test("should create tooltip with resource info", () => {
 			const resource = sampleResources.get("github://repo1");
 			invariant(resource !== undefined, "Resource not found");
-			const tooltip = createTooltip(resource);
+			const tooltip = createDefaultTooltip(resource);
 
 			expect(tooltip.dom).toBeDefined();
 			expect(tooltip.dom.className).toBe("cm-tooltip-cursor");
@@ -104,7 +106,7 @@ describe("hover", () => {
 		test("should handle missing optional fields", () => {
 			const resource = sampleResources.get("gitlab://repo2");
 			invariant(resource !== undefined, "Resource not found");
-			const tooltip = createTooltip(resource);
+			const tooltip = createDefaultTooltip(resource);
 
 			const title = tooltip.dom.querySelector(".cm-tooltip-cursor-title");
 			expect(title).toBeDefined();
@@ -125,6 +127,7 @@ describe("hover", () => {
 					type: "github",
 					description: "A GitHub repository",
 					mimeType: "application/x-git",
+					data: {},
 				},
 				{
 					name: "ticket1",
@@ -132,6 +135,7 @@ describe("hover", () => {
 					type: "jira",
 					description: "A Jira ticket",
 					mimeType: "application/json",
+					data: {},
 				},
 				{
 					name: "page1",
@@ -139,11 +143,12 @@ describe("hover", () => {
 					type: "notion",
 					description: "A Notion page",
 					mimeType: "text/html",
+					data: {},
 				},
 			];
 
 			for (const resource of resources) {
-				const tooltip = createTooltip(resource);
+				const tooltip = createDefaultTooltip(resource);
 				const title = tooltip.dom.querySelector(".cm-tooltip-cursor-title");
 				const description = tooltip.dom.querySelector(".cm-tooltip-cursor-description");
 				const mimeType = tooltip.dom.querySelector(".cm-tooltip-cursor-mimetype");
