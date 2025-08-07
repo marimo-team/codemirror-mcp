@@ -68,28 +68,168 @@ function getResourceAfterCursor(
 	return null;
 }
 
+/**
+ * Get all resources in the document and find which one contains the cursor position
+ */
+function getResourceAtPosition(
+	state: EditorState,
+	pos: number,
+): { from: number; to: number; uri: string } | null {
+	const resources = state.field(resourcesField);
+	const doc = state.doc;
+
+	// Search around the cursor position for resources
+	const line = doc.lineAt(pos);
+	const lineText = doc.sliceString(line.from, line.to);
+	const matches = Array.from(matchAllURIs(lineText));
+
+	for (const match of matches) {
+		const resourceStart = line.from + match.index;
+		const resourceEnd = resourceStart + match[0].length;
+		const uri = match[0].slice(1); // Remove @ prefix
+
+		// Check if cursor is within this resource and it exists
+		if (pos >= resourceStart && pos <= resourceEnd && resources.has(uri)) {
+			return { from: resourceStart, to: resourceEnd, uri };
+		}
+	}
+
+	return null;
+}
+
+/**
+ * Find the next resource boundary when moving left
+ */
+function getResourceBoundaryLeft(
+	state: EditorState,
+	pos: number,
+): number | null {
+	const resources = state.field(resourcesField);
+	const doc = state.doc;
+	const line = doc.lineAt(pos);
+	const lineText = doc.sliceString(line.from, pos);
+	const matches = Array.from(matchAllURIs(lineText));
+
+	// Find the rightmost resource that ends before or at cursor position
+	let bestBoundary: number | null = null;
+	for (const match of matches) {
+		const resourceStart = line.from + match.index;
+		const resourceEnd = resourceStart + match[0].length;
+		const uri = match[0].slice(1);
+
+		if (resources.has(uri) && resourceEnd <= pos) {
+			if (pos > resourceEnd) {
+				// Cursor is after resource - jump to end of resource
+				bestBoundary = resourceEnd;
+			} else if (pos === resourceEnd) {
+				// Cursor is at end of resource - jump to start of resource
+				bestBoundary = resourceStart;
+			}
+		}
+	}
+
+	return bestBoundary;
+}
+
+/**
+ * Find the next resource boundary when moving right
+ */
+function getResourceBoundaryRight(
+	state: EditorState,
+	pos: number,
+): number | null {
+	const resources = state.field(resourcesField);
+	const doc = state.doc;
+	const line = doc.lineAt(pos);
+	const lineText = doc.sliceString(pos, line.to);
+	const matches = Array.from(matchAllURIs(lineText));
+
+	// Find the leftmost resource that starts at or after cursor position
+	for (const match of matches) {
+		const resourceStart = pos + match.index;
+		const resourceEnd = resourceStart + match[0].length;
+		const uri = match[0].slice(1);
+
+		if (resources.has(uri)) {
+			if (pos < resourceStart) {
+				// Cursor is before resource - jump to start of resource
+				return resourceStart;
+			} else if (pos === resourceStart) {
+				// Cursor is at start of resource - jump to end of resource
+				return resourceEnd;
+			}
+		}
+	}
+
+	return null;
+}
+
 export const resourceInputFilter = EditorState.transactionFilter.of((tr: Transaction) => {
-	// Only care about explicit delete.backward/delete.forward
-	const del = tr.annotation(Transaction.userEvent);
-	if (del !== "delete.backward" && del !== "delete.forward") return tr;
+	const userEvent = tr.annotation(Transaction.userEvent);
+	if (!userEvent) return tr;
 
 	const sel = tr.startState.selection.main;
 	if (!sel.empty) return tr;
 
-	let resource: { from: number; to: number; uri: string } | null = null;
-	if (del === "delete.backward") {
-		resource = getResourceAtCursor(tr.startState, sel.head);
-	} else if (del === "delete.forward") {
-		resource = getResourceAfterCursor(tr.startState, sel.head);
-	}
-	if (!resource) return tr;
+	// Handle deletion events
+	if (userEvent === "delete.backward" || userEvent === "delete.forward") {
+		let resource: { from: number; to: number; uri: string } | null = null;
+		if (userEvent === "delete.backward") {
+			resource = getResourceAtCursor(tr.startState, sel.head);
+		} else if (userEvent === "delete.forward") {
+			resource = getResourceAfterCursor(tr.startState, sel.head);
+		}
+		if (!resource) return tr;
 
-	// Replace the resource with nothing, keep cursor at start
-	return [
-		{
-			changes: { from: resource.from, to: resource.to, insert: "" },
-			selection: { anchor: resource.from },
-			scrollIntoView: true,
-		},
-	];
+		// Replace the resource with nothing, keep cursor at start
+		return [
+			{
+				changes: { from: resource.from, to: resource.to, insert: "" },
+				selection: { anchor: resource.from },
+				scrollIntoView: true,
+			},
+		];
+	}
+
+	// Handle cursor movement events - check if it's a selection change with no selection
+	if (tr.selection && tr.selection.main.empty && sel.empty) {
+		// This is likely a cursor movement
+		const oldPos = sel.head;
+		const newPos = tr.selection.main.head;
+		let targetPos: number | null = null;
+
+		if (newPos < oldPos) {
+			// Moving left
+			const currentResource = getResourceAtPosition(tr.startState, oldPos);
+			if (currentResource && oldPos > currentResource.from) {
+				// If cursor was inside a resource, jump to the start
+				targetPos = currentResource.from;
+			} else {
+				// Check for resource boundary to the left
+				targetPos = getResourceBoundaryLeft(tr.startState, oldPos);
+			}
+		} else if (newPos > oldPos) {
+			// Moving right
+			const currentResource = getResourceAtPosition(tr.startState, oldPos);
+			if (currentResource && oldPos < currentResource.to) {
+				// If cursor was inside a resource, jump to the end
+				targetPos = currentResource.to;
+			} else {
+				// Check for resource boundary to the right
+				targetPos = getResourceBoundaryRight(tr.startState, oldPos);
+			}
+		}
+
+		// If we found a target position, override the cursor movement
+		if (targetPos !== null && targetPos !== newPos) {
+			return [
+				{
+					selection: { anchor: targetPos },
+					scrollIntoView: true,
+				},
+			];
+		}
+	}
+
+	return tr;
 });
