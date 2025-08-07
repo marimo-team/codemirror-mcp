@@ -11,7 +11,7 @@ describe("index.ts exports", () => {
 			  "hoverResource",
 			  "mcpExtension",
 			  "resourceCompletion",
-			  "resourceKeymap",
+			  "resourceInputFilter",
 			  "resourceTheme",
 			  "resourcesField",
 			]

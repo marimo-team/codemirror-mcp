@@ -88,8 +88,8 @@ function getResourceAtPosition(
 		const resourceEnd = resourceStart + match[0].length;
 		const uri = match[0].slice(1); // Remove @ prefix
 
-		// Check if cursor is within this resource and it exists
-		if (pos >= resourceStart && pos <= resourceEnd && resources.has(uri)) {
+		// Check if cursor is within this resource (not at boundaries) and it exists
+		if (pos > resourceStart && pos < resourceEnd && resources.has(uri)) {
 			return { from: resourceStart, to: resourceEnd, uri };
 		}
 	}
@@ -100,10 +100,7 @@ function getResourceAtPosition(
 /**
  * Find the next resource boundary when moving left
  */
-function getResourceBoundaryLeft(
-	state: EditorState,
-	pos: number,
-): number | null {
+function getResourceBoundaryLeft(state: EditorState, pos: number): number | null {
 	const resources = state.field(resourcesField);
 	const doc = state.doc;
 	const line = doc.lineAt(pos);
@@ -134,27 +131,25 @@ function getResourceBoundaryLeft(
 /**
  * Find the next resource boundary when moving right
  */
-function getResourceBoundaryRight(
-	state: EditorState,
-	pos: number,
-): number | null {
+function getResourceBoundaryRight(state: EditorState, pos: number): number | null {
 	const resources = state.field(resourcesField);
 	const doc = state.doc;
 	const line = doc.lineAt(pos);
-	const lineText = doc.sliceString(pos, line.to);
+	const lineText = doc.sliceString(line.from, line.to);
 	const matches = Array.from(matchAllURIs(lineText));
 
 	// Find the leftmost resource that starts at or after cursor position
 	for (const match of matches) {
-		const resourceStart = pos + match.index;
+		const resourceStart = line.from + match.index;
 		const resourceEnd = resourceStart + match[0].length;
 		const uri = match[0].slice(1);
 
-		if (resources.has(uri)) {
+		if (resources.has(uri) && resourceStart >= pos) {
 			if (pos < resourceStart) {
 				// Cursor is before resource - jump to start of resource
 				return resourceStart;
-			} else if (pos === resourceStart) {
+			}
+			if (pos === resourceStart) {
 				// Cursor is at start of resource - jump to end of resource
 				return resourceEnd;
 			}
@@ -170,6 +165,107 @@ export const resourceInputFilter = EditorState.transactionFilter.of((tr: Transac
 
 	const sel = tr.startState.selection.main;
 	if (!sel.empty) return tr;
+
+	// Handle text insertion near resources
+	if (userEvent === "input.type" || userEvent.startsWith("input")) {
+		// Check if we're inserting text
+		if (tr.changes.empty) return tr;
+
+		const resources = tr.startState.field(resourcesField);
+		const doc = tr.startState.doc;
+		let modifiedChanges = false;
+		let cursorAdjustment = 0;
+
+		const newChanges: Array<{ from: number; to: number; insert: string }> = [];
+
+		tr.changes.iterChanges((fromA, toA, _fromB, _toB, inserted) => {
+			const insertedText = inserted.toString();
+			const insertPos = fromA;
+
+			// Skip if inserting whitespace
+			if (/^\s+$/.test(insertedText)) {
+				newChanges.push({ from: fromA, to: toA, insert: insertedText });
+				return;
+			}
+
+			// Find resources around the insertion point
+			const line = doc.lineAt(insertPos);
+			const lineText = doc.sliceString(line.from, line.to);
+			const matches = Array.from(matchAllURIs(lineText));
+
+			let needsSpaceBefore = false;
+			let needsSpaceAfter = false;
+
+			for (const match of matches) {
+				const resourceStart = line.from + match.index;
+				const resourceEnd = resourceStart + match[0].length;
+				const uri = match[0].slice(1);
+
+				if (resources.has(uri)) {
+					// Check if inserting directly before a resource
+					if (insertPos === resourceStart) {
+						// Check if there's no whitespace before the insertion point
+						const charBefore = insertPos > 0 ? doc.sliceString(insertPos - 1, insertPos) : "";
+						if (
+							charBefore !== "" &&
+							charBefore !== " " &&
+							charBefore !== "\n" &&
+							charBefore !== "\t"
+						) {
+							needsSpaceBefore = true;
+						}
+					}
+					// Check if inserting directly after a resource
+					if (insertPos === resourceEnd) {
+						// Check if there's no whitespace after the insertion point
+						const charAfter =
+							insertPos < doc.length ? doc.sliceString(insertPos, insertPos + 1) : "";
+						if (
+							charAfter === "" ||
+							(charAfter !== " " && charAfter !== "\n" && charAfter !== "\t")
+						) {
+							needsSpaceAfter = true;
+						}
+					}
+				}
+			}
+
+			// Build the final insertion text
+			let finalText = insertedText;
+			if (needsSpaceBefore) {
+				finalText = ` ${finalText}`;
+				cursorAdjustment += 1;
+			}
+			if (needsSpaceAfter) {
+				finalText = ` ${finalText}`;
+				cursorAdjustment += 1;
+			}
+
+			if (finalText !== insertedText) {
+				modifiedChanges = true;
+			}
+
+			newChanges.push({ from: fromA, to: toA, insert: finalText });
+		});
+
+		if (modifiedChanges) {
+			// Adjust cursor position if we added spaces
+			const newSelection = tr.selection
+				? {
+						anchor: tr.selection.main.anchor + cursorAdjustment,
+						head: tr.selection.main.head + cursorAdjustment,
+					}
+				: undefined;
+
+			return [
+				{
+					changes: newChanges,
+					selection: newSelection,
+					scrollIntoView: tr.scrollIntoView,
+				},
+			];
+		}
+	}
 
 	// Handle deletion events
 	if (userEvent === "delete.backward" || userEvent === "delete.forward") {
@@ -192,8 +288,14 @@ export const resourceInputFilter = EditorState.transactionFilter.of((tr: Transac
 	}
 
 	// Handle cursor movement events - check if it's a selection change with no selection
-	if (tr.selection && tr.selection.main.empty && sel.empty) {
-		// This is likely a cursor movement
+	// BUT only if it's not a text insertion (input events should be handled above)
+	if (
+		tr.selection?.main.empty &&
+		sel.empty &&
+		!userEvent.startsWith("input") &&
+		userEvent !== "input.type"
+	) {
+		// This is likely a cursor movement (arrow keys, mouse clicks, etc.)
 		const oldPos = sel.head;
 		const newPos = tr.selection.main.head;
 		let targetPos: number | null = null;
