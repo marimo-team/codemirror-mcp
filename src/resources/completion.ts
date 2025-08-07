@@ -37,7 +37,7 @@ export const resourceCompletion = (
 				...formatResource?.(resource),
 				apply: (view, _completion, from, to) => {
 					view.dispatch({
-						changes: { from, to, insert: `@${resource.uri}` },
+						changes: { from, to, insert: `@${resource.uri} ` },
 					});
 				},
 			}),

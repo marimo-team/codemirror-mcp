@@ -65,7 +65,8 @@ export function hoverResource(options: HoverResourceOptions) {
 		const { from, text } = view.state.doc.lineAt(pos);
 		const resources = view.state.field(resourcesField);
 
-		const result = findResourceAtPosition(text, pos - from, resources, from);
+		// Fallback: try to find resource in the document text (works for non-decorated resources)
+		const result = findResourceAtPosition(text, pos, resources, from);
 		if (!result) return null;
 
 		return {

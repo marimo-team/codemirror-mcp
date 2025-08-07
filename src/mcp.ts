@@ -13,6 +13,7 @@ import { MCPResourceProvider } from "./mcp/mcp-provider.js";
 import { resourceCompletion } from "./resources/completion.js";
 import { resourceDecorations } from "./resources/decoration.js";
 import { type HoverResourceOptions, hoverResource } from "./resources/hover.js";
+import { resourceInputFilter } from "./resources/input-filter.js";
 import { type Resource, toMCPResource } from "./resources/resource.js";
 import { mcpOptionsField, promptsField, resourcesField, updatePrompts } from "./state.js";
 import { resourceTheme } from "./theme.js";
@@ -182,6 +183,7 @@ export function mcpExtension(options: MCPOptions): Extension {
 		resourceTheme,
 		hoverResource(options.hoverOptions ?? {}),
 		resourceDecorations,
+		resourceInputFilter,
 		mcpOptionsField.init(() => ({
 			onResourceClick: adaptResource(options.onResourceClick),
 			onResourceMouseOver: adaptResource(options.onResourceMouseOver),

@@ -16,4 +16,5 @@ export {
 	createDefaultTooltip,
 } from "./resources/hover.js";
 
+export { resourceInputFilter } from "./resources/input-filter.js";
 export { resourceTheme } from "./theme.js";
