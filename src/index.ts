@@ -8,6 +8,8 @@ export type {
 	ResourceCompletionOptions,
 } from "./resources/resource.js";
 
+export { resourceDecorations } from "./resources/decoration.js";
+
 export { resourcesField } from "./state.js";
 export { resourceCompletion } from "./resources/completion.js";
 
