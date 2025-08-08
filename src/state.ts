@@ -1,5 +1,6 @@
 import { StateEffect, type StateEffectType, StateField } from "@codemirror/state";
-import type { Prompt, PromptMessage, Resource } from "@modelcontextprotocol/sdk/types.js";
+import type { Prompt, PromptMessage } from "@modelcontextprotocol/sdk/types.js";
+import type { Resource } from "./resources/resource.js";
 
 type ResourceURI = string;
 type ResourceMap = Map<ResourceURI, Resource>;
@@ -13,17 +14,20 @@ export const resourcesField: StateField<ResourceMap> = StateField.define<Resourc
 		return new Map<ResourceURI, Resource>();
 	},
 	update(oldResources, tr) {
+		let updated = false;
+		let newResources = oldResources;
 		for (const e of tr.effects) {
 			if (e.is(updateResources)) {
-				// merge resources
-				const newResources = new Map<ResourceURI, Resource>(oldResources);
+				if (!updated) {
+					newResources = new Map<ResourceURI, Resource>(oldResources);
+					updated = true;
+				}
 				for (const [resourceURI, resource] of e.value) {
 					newResources.set(resourceURI, resource);
 				}
-				return newResources;
 			}
 		}
-		return oldResources;
+		return newResources;
 	},
 });
 
@@ -59,16 +63,19 @@ export const promptsField = StateField.define<PromptMap>({
 		return new Map<string, Prompt>();
 	},
 	update(oldPrompts, tr) {
+		let updated = false;
+		let newPrompts = oldPrompts;
 		for (const e of tr.effects) {
 			if (e.is(updatePrompts)) {
-				// merge prompts
-				const newPrompts = new Map<string, Prompt>(oldPrompts);
+				if (!updated) {
+					newPrompts = new Map<string, Prompt>(oldPrompts);
+					updated = true;
+				}
 				for (const [name, prompt] of e.value) {
 					newPrompts.set(name, prompt);
 				}
-				return newPrompts;
 			}
 		}
-		return oldPrompts;
+		return newPrompts;
 	},
 });

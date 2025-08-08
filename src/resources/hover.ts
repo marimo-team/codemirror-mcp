@@ -1,9 +1,9 @@
 import { type TooltipView, hoverTooltip } from "@codemirror/view";
-import type { Resource } from "@modelcontextprotocol/sdk/types.js";
-import { resourcesField } from "./state.js";
-import { matchAllURIs } from "./utils.js";
+import { resourcesField } from "../state.js";
+import { matchAllURIs } from "../utils.js";
+import type { Resource } from "./resource.js";
 
-export function createTooltip(resource: Resource): TooltipView {
+export function createDefaultTooltip(resource: Resource): TooltipView {
 	const dom = document.createElement("div");
 	dom.className = "cm-tooltip-cursor";
 
@@ -56,12 +56,17 @@ export function findResourceAtPosition(
 	return null;
 }
 
-export function hoverResource() {
+export interface HoverResourceOptions {
+	createTooltip?: (resource: Resource) => TooltipView;
+}
+
+export function hoverResource(options: HoverResourceOptions) {
 	return hoverTooltip((view, pos) => {
 		const { from, text } = view.state.doc.lineAt(pos);
 		const resources = view.state.field(resourcesField);
 
-		const result = findResourceAtPosition(text, pos - from, resources, from);
+		// Fallback: try to find resource in the document text (works for non-decorated resources)
+		const result = findResourceAtPosition(text, pos, resources, from);
 		if (!result) return null;
 
 		return {
@@ -69,6 +74,7 @@ export function hoverResource() {
 			end: result.end,
 			above: true,
 			create() {
+				const createTooltip = options.createTooltip ?? createDefaultTooltip;
 				return createTooltip(result.resource);
 			},
 		};

@@ -7,9 +7,9 @@ import {
 	type ViewUpdate,
 	WidgetType,
 } from "@codemirror/view";
-import type { Resource } from "@modelcontextprotocol/sdk/types.js";
-import { mcpOptionsField, resourcesField, updateResources } from "./state.js";
-import { matchAllURIs } from "./utils.js";
+import { mcpOptionsField, resourcesField, updateResources } from "../state.js";
+import { matchAllURIs } from "../utils.js";
+import type { Resource } from "./resource.js";
 
 // Widget for resource decoration
 class ResourceWidget extends WidgetType {

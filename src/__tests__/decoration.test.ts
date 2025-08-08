@@ -2,11 +2,11 @@ import { EditorState, Extension } from "@codemirror/state";
 import type { RangeSet } from "@codemirror/state";
 import type { Decoration } from "@codemirror/view";
 import { EditorView } from "@codemirror/view";
-import type { Resource } from "@modelcontextprotocol/sdk/types.js";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { resourceDecorations } from "../decoration";
-import { mcpOptionsField, resourcesField, updateResources } from "../state";
-import { invariant } from "../utils";
+import { resourceDecorations } from "../resources/decoration.js";
+import type { Resource } from "../resources/resource.js";
+import { mcpOptionsField, resourcesField, updateResources } from "../state.js";
+import { invariant } from "../utils.js";
 
 // Helper function to count decorations
 function countDecorations(decos: RangeSet<Decoration>): number {
@@ -20,8 +20,8 @@ function countDecorations(decos: RangeSet<Decoration>): number {
 describe("resourceDecorations", () => {
 	let view: EditorView;
 	const sampleResources: Resource[] = [
-		{ name: "repo1", uri: "github://repo1", type: "github" },
-		{ name: "repo2", uri: "gitlab://repo2", type: "gitlab" },
+		{ name: "repo1", uri: "github://repo1", type: "github", data: {} },
+		{ name: "repo2", uri: "gitlab://repo2", type: "gitlab", data: {} },
 	];
 
 	beforeEach(() => {
@@ -132,6 +132,7 @@ describe("resourceDecorations", () => {
 				name: "repo3",
 				uri: "github://repo3",
 				type: "github",
+				data: {},
 			},
 		];
 
