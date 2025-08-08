@@ -1,5 +1,4 @@
 import { EditorState, Transaction } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
 import { resourcesField } from "../state.js";
 import { matchAllURIs } from "../utils.js";
 
@@ -23,9 +22,10 @@ function getResourceAtCursor(
 
 	// Get the last match (closest to cursor)
 	const lastMatch = matches[matches.length - 1];
+	if (!lastMatch) return null;
 	const resourceStart = lineStart + lastMatch.index;
 	const resourceEnd = resourceStart + lastMatch[0].length;
-	const uri = lastMatch[0].slice(1); // Remove @ prefix
+	const uri = lastMatch[0].slice(1); // Remove @ prefix\
 
 	// Check if cursor is at the end of this resource and resource exists
 	if (pos === resourceEnd && resources.has(uri)) {
@@ -54,6 +54,7 @@ function getResourceAfterCursor(
 	if (matches.length === 0) return null;
 
 	const firstMatch = matches[0];
+	if (!firstMatch) return null;
 	if (firstMatch.index !== 0) return null; // Resource must start at cursor
 
 	const resourceStart = pos;
