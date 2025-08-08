@@ -54,8 +54,19 @@ export function fromMCPResource<T = unknown>(
 	},
 	data: T,
 ): Resource<T> {
+	const protocolMatch = mcpResource.uri.split("://");
+	let type: string;
+
+	if (protocolMatch.length > 1) {
+		// Has protocol separator - use the first part as type
+		type = protocolMatch[0] ?? "unknown";
+	} else {
+		// No protocol separator - mark as unknown
+		type = "unknown";
+	}
+
 	return {
-		type: mcpResource.uri.split("://")[0] ?? "unknown",
+		type,
 		uri: mcpResource.uri,
 		name: mcpResource.name,
 		description: mcpResource.description,

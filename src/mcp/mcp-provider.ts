@@ -55,6 +55,12 @@ export class MCPResourceProvider implements ResourceProvider<string> {
 
 			const resources: Resource<string>[] = [];
 
+			// Guard against malformed response data
+			if (!response.resources || !Array.isArray(response.resources)) {
+				this.logger?.warn("Malformed response: resources is not an array");
+				return [];
+			}
+
 			// For each resource, we could potentially read its content
 			// For now, we'll just return the resource metadata with empty data
 			for (const mcpResource of response.resources) {
@@ -80,6 +86,12 @@ export class MCPResourceProvider implements ResourceProvider<string> {
 				{ method: "resources/list" },
 				ListResourcesResultSchema,
 			);
+
+			// Guard against malformed response data
+			if (!listResponse.resources || !Array.isArray(listResponse.resources)) {
+				this.logger?.warn("Malformed response: resources is not an array");
+				return null;
+			}
 
 			const mcpResource = listResponse.resources.find((r) => r.uri === uri);
 			if (!mcpResource) {
