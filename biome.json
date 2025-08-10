@@ -39,5 +39,21 @@
 			"trailingCommas": "all",
 			"semicolons": "always"
 		}
-	}
+	},
+	"overrides": [
+		{
+			"include": ["src/**/*.test.ts"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noConsole": "warn",
+						"noExplicitAny": "warn"
+					},
+					"complexity": {
+						"noForEach": "warn"
+					}
+				}
+			}
+		}
+	]
 }

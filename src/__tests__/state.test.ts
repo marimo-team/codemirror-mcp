@@ -1,14 +1,14 @@
-import { describe, expect, it } from "vitest";
 import { EditorState } from "@codemirror/state";
+import type { Prompt } from "@modelcontextprotocol/sdk/types.js";
+import { describe, expect, it } from "vitest";
+import type { Resource } from "../resources/resource.js";
 import {
-	resourcesField,
-	updateResources,
 	mcpOptionsField,
 	promptsField,
+	resourcesField,
 	updatePrompts,
+	updateResources,
 } from "../state.js";
-import { Resource } from "../resources/resource.js";
-import { Prompt } from "@modelcontextprotocol/sdk/types.js";
 
 const createMockResource = (uri: string): Resource => ({
 	uri,
@@ -61,13 +61,9 @@ describe("state", () => {
 				extensions: [resourcesField],
 			});
 
-			const firstBatch = new Map([
-				["file1.txt", createMockResource("file1.txt")],
-			]);
+			const firstBatch = new Map([["file1.txt", createMockResource("file1.txt")]]);
 
-			const secondBatch = new Map([
-				["file2.txt", createMockResource("file2.txt")],
-			]);
+			const secondBatch = new Map([["file2.txt", createMockResource("file2.txt")]]);
 
 			const state1 = state.update({
 				effects: [updateResources.of(firstBatch)],
@@ -88,9 +84,7 @@ describe("state", () => {
 				extensions: [resourcesField],
 			});
 
-			const original = new Map([
-				["file.txt", createMockResource("file.txt")],
-			]);
+			const original = new Map([["file.txt", createMockResource("file.txt")]]);
 
 			const updated = new Map([
 				["file.txt", { ...createMockResource("file.txt"), description: "Updated description" }],
@@ -118,10 +112,7 @@ describe("state", () => {
 			const batch2 = new Map([["file2.txt", createMockResource("file2.txt")]]);
 
 			const newState = state.update({
-				effects: [
-					updateResources.of(batch1),
-					updateResources.of(batch2),
-				],
+				effects: [updateResources.of(batch1), updateResources.of(batch2)],
 			}).state;
 
 			const resources = newState.field(resourcesField);
@@ -135,9 +126,7 @@ describe("state", () => {
 				extensions: [resourcesField],
 			});
 
-			const testResources = new Map([
-				["file.txt", createMockResource("file.txt")],
-			]);
+			const testResources = new Map([["file.txt", createMockResource("file.txt")]]);
 
 			const state1 = state.update({
 				effects: [updateResources.of(testResources)],
@@ -167,7 +156,7 @@ describe("state", () => {
 		});
 
 		it("should maintain the same value across updates", () => {
-			const mockHandlers = {
+			const _mockHandlers = {
 				onResourceClick: () => {},
 				onResourceMouseOver: () => {},
 				onResourceMouseOut: () => {},
@@ -220,13 +209,9 @@ describe("state", () => {
 				extensions: [promptsField],
 			});
 
-			const firstBatch = new Map([
-				["prompt1", createMockPrompt("prompt1")],
-			]);
+			const firstBatch = new Map([["prompt1", createMockPrompt("prompt1")]]);
 
-			const secondBatch = new Map([
-				["prompt2", createMockPrompt("prompt2")],
-			]);
+			const secondBatch = new Map([["prompt2", createMockPrompt("prompt2")]]);
 
 			const state1 = state.update({
 				effects: [updatePrompts.of(firstBatch)],
@@ -247,9 +232,7 @@ describe("state", () => {
 				extensions: [promptsField],
 			});
 
-			const original = new Map([
-				["prompt", createMockPrompt("prompt")],
-			]);
+			const original = new Map([["prompt", createMockPrompt("prompt")]]);
 
 			const updated = new Map([
 				["prompt", { ...createMockPrompt("prompt"), description: "Updated description" }],
@@ -277,10 +260,7 @@ describe("state", () => {
 			const batch2 = new Map([["prompt2", createMockPrompt("prompt2")]]);
 
 			const newState = state.update({
-				effects: [
-					updatePrompts.of(batch1),
-					updatePrompts.of(batch2),
-				],
+				effects: [updatePrompts.of(batch1), updatePrompts.of(batch2)],
 			}).state;
 
 			const prompts = newState.field(promptsField);
@@ -294,9 +274,7 @@ describe("state", () => {
 				extensions: [promptsField],
 			});
 
-			const testPrompts = new Map([
-				["prompt", createMockPrompt("prompt")],
-			]);
+			const testPrompts = new Map([["prompt", createMockPrompt("prompt")]]);
 
 			const state1 = state.update({
 				effects: [updatePrompts.of(testPrompts)],
@@ -318,19 +296,12 @@ describe("state", () => {
 				extensions: [resourcesField, promptsField, mcpOptionsField],
 			});
 
-			const testResources = new Map([
-				["file.txt", createMockResource("file.txt")],
-			]);
+			const testResources = new Map([["file.txt", createMockResource("file.txt")]]);
 
-			const testPrompts = new Map([
-				["prompt", createMockPrompt("prompt")],
-			]);
+			const testPrompts = new Map([["prompt", createMockPrompt("prompt")]]);
 
 			const newState = state.update({
-				effects: [
-					updateResources.of(testResources),
-					updatePrompts.of(testPrompts),
-				],
+				effects: [updateResources.of(testResources), updatePrompts.of(testPrompts)],
 			}).state;
 
 			expect(newState.field(resourcesField).size).toBe(1);
@@ -342,19 +313,12 @@ describe("state", () => {
 				extensions: [resourcesField, promptsField],
 			});
 
-			const testResources = new Map([
-				["item", createMockResource("item")],
-			]);
+			const testResources = new Map([["item", createMockResource("item")]]);
 
-			const testPrompts = new Map([
-				["item", createMockPrompt("item")],
-			]);
+			const testPrompts = new Map([["item", createMockPrompt("item")]]);
 
 			const newState = state.update({
-				effects: [
-					updateResources.of(testResources),
-					updatePrompts.of(testPrompts),
-				],
+				effects: [updateResources.of(testResources), updatePrompts.of(testPrompts)],
 			}).state;
 
 			const resources = newState.field(resourcesField);

@@ -12,24 +12,24 @@ function getResourceAtCursor(
 	const resources = state.field(resourcesField);
 	const doc = state.doc;
 
-	// Look backward from cursor to find resource
-	const lineStart = doc.lineAt(pos).from;
-	const textBefore = doc.sliceString(lineStart, pos);
+	// Look at the entire line to find all resources
+	const line = doc.lineAt(pos);
+	const lineText = doc.sliceString(line.from, line.to);
 
-	// Find all resources in the line up to cursor
-	const matches = Array.from(matchAllURIs(textBefore));
+	// Find all resources in the line
+	const matches = Array.from(matchAllURIs(lineText));
 	if (matches.length === 0) return null;
 
-	// Get the last match (closest to cursor)
-	const lastMatch = matches[matches.length - 1];
-	if (!lastMatch) return null;
-	const resourceStart = lineStart + lastMatch.index;
-	const resourceEnd = resourceStart + lastMatch[0].length;
-	const uri = lastMatch[0].slice(1); // Remove @ prefix\
+	// Look for a resource that ends exactly at the cursor position
+	for (const match of matches) {
+		const resourceStart = line.from + match.index;
+		const resourceEnd = resourceStart + match[0].length;
+		const uri = match[0].slice(1); // Remove @ prefix
 
-	// Check if cursor is at the end of this resource and resource exists
-	if (pos === resourceEnd && resources.has(uri)) {
-		return { from: resourceStart, to: resourceEnd, uri };
+		// Check if cursor is at the end of this resource and resource exists
+		if (pos === resourceEnd && resources.has(uri)) {
+			return { from: resourceStart, to: resourceEnd, uri };
+		}
 	}
 
 	return null;

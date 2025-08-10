@@ -1,19 +1,20 @@
-import { describe, expect, it, vi } from "vitest";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
+import { describe, expect, it, vi } from "vitest";
 import { resourceCompletion } from "../resources/completion.js";
+import type { Resource } from "../resources/resource.js";
 import { resourcesField } from "../state.js";
-import { Resource } from "../resources/resource.js";
 
 const createMockResource = (uri: string, name?: string): Resource => ({
 	uri,
+	type: "mock",
 	name: name || uri,
 	description: `Test resource: ${uri}`,
 	mimeType: "text/plain",
 	data: undefined,
 });
 
-const createMockView = (doc: string, pos: number) => {
+const createMockView = (doc: string, _pos: number) => {
 	const state = EditorState.create({
 		doc,
 		extensions: [resourcesField],
@@ -27,7 +28,7 @@ const createMockView = (doc: string, pos: number) => {
 
 const createMockContext = (text: string, pos: number, explicit = false) => {
 	const view = createMockView(text, pos);
-	
+
 	return {
 		state: view.state,
 		pos,
@@ -37,7 +38,7 @@ const createMockContext = (text: string, pos: number, explicit = false) => {
 			const textBefore = text.slice(0, pos);
 			const match = textBefore.match(regex);
 			if (!match) return null;
-			
+
 			return {
 				from: pos - match[0].length,
 				to: pos,
@@ -45,7 +46,7 @@ const createMockContext = (text: string, pos: number, explicit = false) => {
 			};
 		},
 		aborted: false,
-		tokenBefore: (types: any) => null,
+		tokenBefore: (_types: any) => null,
 		prefix: (text: string, from: number) => text.slice(from, pos),
 	};
 };
@@ -55,10 +56,10 @@ describe("resourceCompletion", () => {
 		it("should return null when no @ character is present", async () => {
 			const getResources = vi.fn().mockResolvedValue([]);
 			const completion = resourceCompletion(getResources);
-			
+
 			const context = createMockContext("hello world", 11);
 			const result = await completion(context);
-			
+
 			expect(result).toBeNull();
 			expect(getResources).not.toHaveBeenCalled();
 		});
@@ -66,10 +67,10 @@ describe("resourceCompletion", () => {
 		it("should return null when @ is at cursor position and not explicit", async () => {
 			const getResources = vi.fn().mockResolvedValue([]);
 			const completion = resourceCompletion(getResources);
-			
+
 			const context = createMockContext("hello @", 7, false);
 			const result = await completion(context);
-			
+
 			expect(result).toBeNull();
 		});
 
@@ -77,10 +78,10 @@ describe("resourceCompletion", () => {
 			const resources = [createMockResource("file.txt")];
 			const getResources = vi.fn().mockResolvedValue(resources);
 			const completion = resourceCompletion(getResources);
-			
+
 			const context = createMockContext("hello @", 7, true);
 			const result = await completion(context);
-			
+
 			expect(result).not.toBeNull();
 			expect(result?.options).toHaveLength(1);
 			expect(result?.options[0].label).toBe("@file.txt");
@@ -90,10 +91,10 @@ describe("resourceCompletion", () => {
 			const resources = [createMockResource("file.txt")];
 			const getResources = vi.fn().mockResolvedValue(resources);
 			const completion = resourceCompletion(getResources);
-			
+
 			const context = createMockContext("hello @fi", 9);
 			const result = await completion(context);
-			
+
 			expect(result).not.toBeNull();
 			expect(result?.options).toHaveLength(1);
 			expect(result?.from).toBe(6); // Start of @fi
@@ -102,10 +103,10 @@ describe("resourceCompletion", () => {
 		it("should return null when no resources are available", async () => {
 			const getResources = vi.fn().mockResolvedValue([]);
 			const completion = resourceCompletion(getResources);
-			
+
 			const context = createMockContext("hello @file", 11);
 			const result = await completion(context);
-			
+
 			expect(result).toBeNull();
 		});
 	});
@@ -118,12 +119,12 @@ describe("resourceCompletion", () => {
 			];
 			const getResources = vi.fn().mockResolvedValue(resources);
 			const completion = resourceCompletion(getResources);
-			
+
 			const context = createMockContext("@", 1, true);
 			const result = await completion(context);
-			
+
 			expect(result?.options).toHaveLength(2);
-			
+
 			const option1 = result?.options[0];
 			expect(option1?.label).toBe("@My File");
 			expect(option1?.displayLabel).toBe("My File");
@@ -143,10 +144,10 @@ describe("resourceCompletion", () => {
 			};
 			const getResources = vi.fn().mockResolvedValue([resource]);
 			const completion = resourceCompletion(getResources);
-			
+
 			const context = createMockContext("@", 1, true);
 			const result = await completion(context);
-			
+
 			const option = result?.options[0];
 			expect(option?.info).toBeUndefined();
 			expect(option?.boost).toBe(0);
@@ -162,10 +163,10 @@ describe("resourceCompletion", () => {
 			};
 			const getResources = vi.fn().mockResolvedValue([resource]);
 			const completion = resourceCompletion(getResources);
-			
+
 			const context = createMockContext("@", 1, true);
 			const result = await completion(context);
-			
+
 			const option = result?.options[0];
 			expect(option?.type).toBe("variable");
 		});
@@ -179,10 +180,10 @@ describe("resourceCompletion", () => {
 				boost: 999,
 			});
 			const completion = resourceCompletion(getResources, formatResource);
-			
+
 			const context = createMockContext("@", 1, true);
 			const result = await completion(context);
-			
+
 			const option = result?.options[0];
 			expect(option?.label).toBe("Custom Label");
 			expect(option?.type).toBe("custom");
@@ -196,10 +197,10 @@ describe("resourceCompletion", () => {
 			const resources = [createMockResource("file.txt")];
 			const getResources = vi.fn().mockResolvedValue(resources);
 			const completion = resourceCompletion(getResources);
-			
+
 			const context = createMockContext("@fi", 3);
 			const result = await completion(context);
-			
+
 			const option = result?.options[0];
 			expect(option?.apply).toBeDefined();
 
@@ -210,7 +211,7 @@ describe("resourceCompletion", () => {
 
 			if (option?.apply && typeof option.apply === "function") {
 				option.apply(mockView as any, option, 0, 3);
-				
+
 				expect(mockView.dispatch).toHaveBeenCalledWith({
 					changes: { from: 0, to: 3, insert: "@file.txt " },
 				});
@@ -223,17 +224,17 @@ describe("resourceCompletion", () => {
 			const resources = [createMockResource("file.txt")];
 			const getResources = vi.fn().mockResolvedValue(resources);
 			const completion = resourceCompletion(getResources);
-			
+
 			const view = createMockView("@", 1);
 			const dispatchSpy = vi.spyOn(view, "dispatch");
-			
+
 			const context = {
 				...createMockContext("@", 1, true),
 				view,
 			};
-			
+
 			await completion(context);
-			
+
 			expect(dispatchSpy).toHaveBeenCalledWith({
 				effects: expect.anything(),
 			});
@@ -243,14 +244,14 @@ describe("resourceCompletion", () => {
 			const resources = [createMockResource("file.txt")];
 			const getResources = vi.fn().mockResolvedValue(resources);
 			const completion = resourceCompletion(getResources);
-			
+
 			const context = {
 				...createMockContext("@", 1, true),
 				view: undefined,
 			};
-			
+
 			const result = await completion(context);
-			
+
 			// Should still return completions even without view
 			expect(result?.options).toHaveLength(1);
 		});
@@ -261,10 +262,10 @@ describe("resourceCompletion", () => {
 			const resources = [createMockResource("file.txt")];
 			const getResources = vi.fn().mockResolvedValue(resources);
 			const completion = resourceCompletion(getResources);
-			
+
 			const context = createMockContext("@file", 5);
 			const result = await completion(context);
-			
+
 			expect(result).not.toBeNull();
 			expect(result?.from).toBe(0);
 		});
@@ -273,10 +274,10 @@ describe("resourceCompletion", () => {
 			const resources = [createMockResource("file.txt")];
 			const getResources = vi.fn().mockResolvedValue(resources);
 			const completion = resourceCompletion(getResources);
-			
+
 			const context = createMockContext("hello @file", 11);
 			const result = await completion(context);
-			
+
 			expect(result).not.toBeNull();
 			expect(result?.from).toBe(6);
 		});
@@ -285,20 +286,20 @@ describe("resourceCompletion", () => {
 			const resources = [createMockResource("file123.txt")];
 			const getResources = vi.fn().mockResolvedValue(resources);
 			const completion = resourceCompletion(getResources);
-			
+
 			const context = createMockContext("@file123", 8);
 			const result = await completion(context);
-			
+
 			expect(result).not.toBeNull();
 		});
 
 		it("should not match @ followed by non-word characters", async () => {
 			const getResources = vi.fn().mockResolvedValue([]);
 			const completion = resourceCompletion(getResources);
-			
+
 			const context = createMockContext("@-file", 6);
 			const result = await completion(context);
-			
+
 			expect(result).toBeNull();
 		});
 	});
@@ -307,9 +308,9 @@ describe("resourceCompletion", () => {
 		it("should handle getResources errors gracefully", async () => {
 			const getResources = vi.fn().mockRejectedValue(new Error("Failed to fetch"));
 			const completion = resourceCompletion(getResources);
-			
+
 			const context = createMockContext("@file", 5);
-			
+
 			await expect(completion(context)).rejects.toThrow("Failed to fetch");
 		});
 
@@ -317,10 +318,10 @@ describe("resourceCompletion", () => {
 			const malformedResource = { uri: "test" } as Resource;
 			const getResources = vi.fn().mockResolvedValue([malformedResource]);
 			const completion = resourceCompletion(getResources);
-			
+
 			const context = createMockContext("@", 1, true);
 			const result = await completion(context);
-			
+
 			// Should handle gracefully and still create completion
 			expect(result?.options).toHaveLength(1);
 			expect(result?.options[0].label).toBe("@undefined"); // name is undefined

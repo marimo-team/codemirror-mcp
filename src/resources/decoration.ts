@@ -28,7 +28,6 @@ class ResourceWidget extends WidgetType {
 		const wrap = document.createElement("span");
 		wrap.className = "cm-resource-widget";
 		wrap.textContent = `@${this.resource.name}`;
-		wrap.title = this.resource.uri;
 
 		const mcpOptions = this.view.state.field(mcpOptionsField, false);
 		const onResourceClick = mcpOptions?.onResourceClick;
@@ -63,6 +62,29 @@ class ResourceWidget extends WidgetType {
 	}
 }
 
+// Widget for not found resources
+class NotFoundResourceWidget extends WidgetType {
+	constructor(
+		readonly uri: string,
+		readonly view: EditorView,
+	) {
+		super();
+	}
+
+	eq(other: NotFoundResourceWidget) {
+		return other.uri === this.uri;
+	}
+
+	toDOM() {
+		const wrap = document.createElement("span");
+		wrap.className = "cm-not-found-resource-widget";
+		const guessName = this.uri.split("://")[1];
+		wrap.textContent = `@${guessName ?? this.uri}`;
+
+		return wrap;
+	}
+}
+
 // Create decorations from resources
 function createResourceDecorations(view: EditorView): DecorationSet {
 	const resources = view.state.field(resourcesField);
@@ -80,6 +102,12 @@ function createResourceDecorations(view: EditorView): DecorationSet {
 				decorations.push(
 					Decoration.replace({
 						widget: new ResourceWidget(resource, view),
+					}).range(start, start + match[0].length),
+				);
+			} else {
+				decorations.push(
+					Decoration.replace({
+						widget: new NotFoundResourceWidget(uri, view),
 					}).range(start, start + match[0].length),
 				);
 			}

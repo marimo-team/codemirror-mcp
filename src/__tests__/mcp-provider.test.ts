@@ -176,7 +176,8 @@ describe("MCPResourceProvider", () => {
 			const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
 			const mockClient = {
 				connect: vi.fn().mockResolvedValue(undefined),
-				request: vi.fn()
+				request: vi
+					.fn()
 					.mockResolvedValueOnce(mockListResponse) // First call for list
 					.mockResolvedValueOnce(mockResourceContent), // Second call for read
 			};
@@ -216,7 +217,8 @@ describe("MCPResourceProvider", () => {
 			const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
 			const mockClient = {
 				connect: vi.fn().mockResolvedValue(undefined),
-				request: vi.fn()
+				request: vi
+					.fn()
 					.mockResolvedValueOnce(mockListResponse) // First call for list
 					.mockResolvedValueOnce(mockResourceContent), // Second call for read
 			};

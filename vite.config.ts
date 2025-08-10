@@ -11,6 +11,7 @@ export default defineConfig({
 			reportOnFailure: true,
 			reporter: ["text", "html", "json-summary", "json"],
 		},
+		watch: false,
 	},
 	base: "/codemirror-mcp/",
 });

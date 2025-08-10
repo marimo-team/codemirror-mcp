@@ -11,8 +11,22 @@ import { invariant } from "../utils.js";
 // Helper function to count decorations
 function countDecorations(decos: RangeSet<Decoration>): number {
 	let count = 0;
-	decos.between(0, Number.POSITIVE_INFINITY, () => {
-		count++;
+	decos.between(0, Number.POSITIVE_INFINITY, (_from, _to, decoration) => {
+		// biome-ignore lint/suspicious/noExplicitAny: tests
+		if ((decoration as any).widget.resource) {
+			count++;
+		}
+	});
+	return count;
+}
+
+function countUnknownDecorations(decos: RangeSet<Decoration>): number {
+	let count = 0;
+	decos.between(0, Number.POSITIVE_INFINITY, (_from, _to, decoration) => {
+		// biome-ignore lint/suspicious/noExplicitAny: tests
+		if ((decoration as any).widget.uri) {
+			count++;
+		}
 	});
 	return count;
 }
@@ -124,6 +138,7 @@ describe("resourceDecorations", () => {
 		let decorations = view.plugin(resourceDecorations)?.decorations;
 		invariant(decorations !== undefined, "decorations should be defined");
 		expect(countDecorations(decorations)).toBe(2); // Only 2 resources are known
+		expect(countUnknownDecorations(decorations)).toBe(1);
 
 		// Add another resource
 		const newResources = [
