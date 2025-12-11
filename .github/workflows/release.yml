@@ -1,6 +1,7 @@
 name: Release
 
 permissions:
+  id-token: write  # Required for OIDC
   contents: write
 
 on:
@@ -27,6 +28,9 @@ jobs:
           node-version: 22
           registry-url: 'https://registry.npmjs.org'
           cache: pnpm
+
+      - name: ⎔ Upgrade npm for OIDC support
+        run: pnpm install -g npm@latest
 
       - name: 📥 Install dependencies
         run: pnpm install --frozen-lockfile
@@ -67,9 +71,17 @@ jobs:
       - name: 📦 Publish to NPM
         run: pnpm publish --no-git-checks
         env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+          NODE_AUTH_TOKEN: "" # Clear placeholder set by setup-node to enable OIDC
 
       - name: 📝 Update Changelog
         run: npx changelogithub
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+      - name: 📣 Notify release result
+        if: always()
+        uses: marimo-team/internal-gh-actions/release-notification@main
+        with:
+          status: ${{ job.status }}
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL_RELEASES }}
+          artifact-url: "https://npmjs.com/package/@marimo-team/codemirror-mcp"
