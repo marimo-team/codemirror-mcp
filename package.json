@@ -2,14 +2,14 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@marimo-team/codemirror-mcp",
   "version": "0.1.5",
-	"publishConfig": {
-		"access": "public"
-	},
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "CodeMirror plugin for Model Context Provider",
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/marimo-team/codemirror-mcp"
+    "url": "git+https://github.com/marimo-team/codemirror-mcp.git"
   },
   "scripts": {
     "prepare": "husky install && pnpm run build",
