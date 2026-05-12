@@ -26,7 +26,7 @@ jobs:
           cache: pnpm
 
       - name: 📥 Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --ignore-scripts --frozen-lockfile
 
       - name: 🔍 Type Check
         run: pnpm run typecheck
@@ -115,7 +115,7 @@ jobs:
           node-version: 24
 
       - name: 📝 Update Changelog
-        run: npx changelogithub
+        run: npx changelogithub@14.0.0
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
