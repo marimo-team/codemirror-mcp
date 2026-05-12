@@ -28,10 +28,10 @@ jobs:
           cache: pnpm
 
       - name: ⎔ Upgrade npm for OIDC support
-        run: pnpm install -g npm@latest
+        run: pnpm install --ignore-scripts -g npm@latest
 
       - name: 📥 Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --ignore-scripts --frozen-lockfile
 
       - name: 🔍 Type Check
         run: pnpm run typecheck
