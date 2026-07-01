@@ -51,13 +51,11 @@ function changedLineText(update: ViewUpdate): { before: string; after: string } 
 	const after: string[] = [];
 	update.changes.iterChanges((fromA, toA, fromB, toB) => {
 		const oldStartLine = update.startState.doc.lineAt(fromA);
-		const oldEndLine = update.startState.doc.lineAt(
-			toA === fromA ? fromA : Math.max(fromA, toA - 1),
-		);
+		const oldEndLine = update.startState.doc.lineAt(toA === fromA ? fromA : toA - 1);
 		before.push(update.startState.doc.sliceString(oldStartLine.from, oldEndLine.to));
 
 		const newStartLine = update.state.doc.lineAt(fromB);
-		const newEndLine = update.state.doc.lineAt(toB === fromB ? fromB : Math.max(fromB, toB - 1));
+		const newEndLine = update.state.doc.lineAt(toB === fromB ? fromB : toB - 1);
 		after.push(update.state.doc.sliceString(newStartLine.from, newEndLine.to));
 	});
 	return { before: before.join("\n"), after: after.join("\n") };
