@@ -104,6 +104,25 @@ describe("resourceSync", () => {
 		expectDecorations(view, 0);
 	});
 
+	test("allows the same unresolved URI to sync again after removal and re-add", async () => {
+		const getResources = vi.fn(() => [repo1]);
+		mount("@unknown://x", getResources);
+
+		await vi.waitFor(() => expect(getResources).toHaveBeenCalledTimes(1));
+
+		view.dispatch({
+			changes: { from: 0, to: view.state.doc.length, insert: "" },
+		});
+		await new Promise((resolve) => setTimeout(resolve, 10));
+
+		view.dispatch({
+			changes: { from: 0, to: 0, insert: "@unknown://x" },
+		});
+
+		await vi.waitFor(() => expect(getResources).toHaveBeenCalledTimes(2));
+		expectDecorations(view, 0);
+	});
+
 	test("does not stringify the whole document for plain text edits", async () => {
 		const getResources = vi.fn(() => [repo1]);
 		const longDoc = Array.from({ length: 1000 }, (_, i) => `plain line ${i}`).join("\n");
@@ -147,6 +166,29 @@ describe("resourceSync", () => {
 
 		await vi.waitFor(() => expectDecorations(view, 1));
 		expect(resolve).toHaveBeenCalledWith(["github://repo1"]);
+		expect(getResources).not.toHaveBeenCalled();
+	});
+
+	test("re-checks unresolved URIs after partial resolution", async () => {
+		const getResources = vi.fn(() => [repo1, repo2]);
+		const resolve = vi
+			.fn<(uris: string[]) => Resource[]>()
+			.mockReturnValueOnce([repo1])
+			.mockReturnValueOnce([repo2])
+			.mockReturnValue([]);
+		const state = EditorState.create({
+			doc: "@github://repo1 @gitlab://repo2",
+			extensions: [
+				resourcesField,
+				resourceDecorations,
+				resourceSync(getResources, { debounceMs: 0, resolve }),
+			],
+		});
+		view = new EditorView({ state });
+
+		await vi.waitFor(() => expectDecorations(view, 2));
+		expect(resolve).toHaveBeenNthCalledWith(1, ["github://repo1", "gitlab://repo2"]);
+		expect(resolve).toHaveBeenNthCalledWith(2, ["gitlab://repo2"]);
 		expect(getResources).not.toHaveBeenCalled();
 	});
 

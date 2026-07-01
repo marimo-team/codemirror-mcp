@@ -130,9 +130,10 @@ describe("mcpExtension", () => {
 	});
 
 	it("should auto-sync resources for prefilled URIs", async () => {
+		const prefilledTransport = new MockTransport();
 		const state = EditorState.create({
 			doc: "@test://1",
-			extensions: [mcpExtension({ transport, logger: mockLogger })],
+			extensions: [mcpExtension({ transport: prefilledTransport, logger: mockLogger })],
 		});
 		const prefilledView = new EditorView({
 			state,

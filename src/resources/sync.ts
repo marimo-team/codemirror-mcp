@@ -50,15 +50,21 @@ function keyIncludesAll(key: string, uris: string[]): boolean {
 	return uris.every((uri) => previous.has(uri));
 }
 
-function changedLineText(update: ViewUpdate): string {
-	const chunks: string[] = [];
-	update.changes.iterChanges((_fromA, _toA, fromB, toB) => {
-		const doc = update.state.doc;
-		const startLine = doc.lineAt(fromB);
-		const endLine = doc.lineAt(toB === fromB ? fromB : Math.max(fromB, toB - 1));
-		chunks.push(doc.sliceString(startLine.from, endLine.to));
+function changedLineText(update: ViewUpdate): { before: string; after: string } {
+	const before: string[] = [];
+	const after: string[] = [];
+	update.changes.iterChanges((fromA, toA, fromB, toB) => {
+		const oldStartLine = update.startState.doc.lineAt(fromA);
+		const oldEndLine = update.startState.doc.lineAt(
+			toA === fromA ? fromA : Math.max(fromA, toA - 1),
+		);
+		before.push(update.startState.doc.sliceString(oldStartLine.from, oldEndLine.to));
+
+		const newStartLine = update.state.doc.lineAt(fromB);
+		const newEndLine = update.state.doc.lineAt(toB === fromB ? fromB : Math.max(fromB, toB - 1));
+		after.push(update.state.doc.sliceString(newStartLine.from, newEndLine.to));
 	});
-	return chunks.join("\n");
+	return { before: before.join("\n"), after: after.join("\n") };
 }
 
 function createResourceSyncPlugin(getResources: GetResources, options: ResourceSyncOptions) {
@@ -83,7 +89,12 @@ function createResourceSyncPlugin(getResources: GetResources, options: ResourceS
 
 		update(update: ViewUpdate) {
 			if (update.docChanged) {
-				this.maybeSchedule(update.view, changedLineText(update));
+				const changedText = changedLineText(update);
+				if (changedText.before.includes("://")) {
+					this.maybeSchedule(update.view);
+					return;
+				}
+				this.maybeSchedule(update.view, changedText.after);
 			}
 		}
 
@@ -166,6 +177,7 @@ function createResourceSyncPlugin(getResources: GetResources, options: ResourceS
 							new Map(resolved.map((resource) => [resource.uri, resource])),
 						),
 					});
+					this.rerun = true;
 				} while (this.rerun);
 			} catch (error) {
 				this.lastKey = "";
