@@ -9,6 +9,7 @@ export type {
 } from "./resources/resource.js";
 
 export { resourceDecorations } from "./resources/decoration.js";
+export { type ResourceSyncOptions, resourceSync } from "./resources/sync.js";
 
 export { resourcesField } from "./state.js";
 export { resourceCompletion } from "./resources/completion.js";

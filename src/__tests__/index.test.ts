@@ -13,6 +13,7 @@ describe("index.ts exports", () => {
 			  "resourceCompletion",
 			  "resourceDecorations",
 			  "resourceInputFilter",
+			  "resourceSync",
 			  "resourceTheme",
 			  "resourcesField",
 			]
