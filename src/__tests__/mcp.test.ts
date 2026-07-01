@@ -129,6 +129,24 @@ describe("mcpExtension", () => {
 		expect(mockLogger.log).toHaveBeenCalledWith("Connected to MCP server");
 	});
 
+	it("should auto-sync resources for prefilled URIs", async () => {
+		const prefilledTransport = new MockTransport();
+		const state = EditorState.create({
+			doc: "@test://1",
+			extensions: [mcpExtension({ transport: prefilledTransport, logger: mockLogger })],
+		});
+		const prefilledView = new EditorView({
+			state,
+			parent: document.createElement("div"),
+		});
+
+		await vi.waitFor(() => {
+			expect(prefilledView.state.field(resourcesField).has("test://1")).toBe(true);
+		});
+
+		prefilledView.destroy();
+	});
+
 	it("should provide completions when typing @", async () => {
 		const context = new CompletionContext(state, 7, false);
 		const handler = getCompletionHandler(state);
