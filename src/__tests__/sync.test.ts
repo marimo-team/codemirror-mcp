@@ -123,6 +123,25 @@ describe("resourceSync", () => {
 		expectDecorations(view, 0);
 	});
 
+	test("does not treat a subset of unresolved URIs as unchanged", async () => {
+		const getResources = vi.fn(() => [repo1]);
+		mount("@unknown://x @unknown://y", getResources);
+
+		await vi.waitFor(() => expect(getResources).toHaveBeenCalledTimes(1));
+
+		view.dispatch({
+			changes: { from: 0, to: "@unknown://x ".length, insert: "" },
+		});
+		await vi.waitFor(() => expect(getResources).toHaveBeenCalledTimes(2));
+
+		view.dispatch({
+			changes: { from: 0, to: 0, insert: "@unknown://x " },
+		});
+
+		await vi.waitFor(() => expect(getResources).toHaveBeenCalledTimes(3));
+		expectDecorations(view, 0);
+	});
+
 	test("does not stringify the whole document for plain text edits", async () => {
 		const getResources = vi.fn(() => [repo1]);
 		const longDoc = Array.from({ length: 1000 }, (_, i) => `plain line ${i}`).join("\n");

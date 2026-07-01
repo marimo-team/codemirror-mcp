@@ -42,14 +42,6 @@ function unresolvedKey(uris: string[]): string {
 	return [...uris].sort().join("\n");
 }
 
-function keyIncludesAll(key: string, uris: string[]): boolean {
-	if (key === "") {
-		return false;
-	}
-	const previous = new Set(key.split("\n"));
-	return uris.every((uri) => previous.has(uri));
-}
-
 function changedLineText(update: ViewUpdate): { before: string; after: string } {
 	const before: string[] = [];
 	const after: string[] = [];
@@ -100,9 +92,7 @@ function createResourceSyncPlugin(getResources: GetResources, options: ResourceS
 
 		destroy() {
 			this.destroyed = true;
-			if (this.timer !== undefined) {
-				clearTimeout(this.timer);
-			}
+			this.clearTimer();
 		}
 
 		private maybeSchedule(view: EditorView, changedText?: string) {
@@ -111,6 +101,7 @@ function createResourceSyncPlugin(getResources: GetResources, options: ResourceS
 			if (!text.includes("://")) {
 				if (changedText === undefined) {
 					this.lastKey = "";
+					this.clearTimer();
 				}
 				return;
 			}
@@ -120,20 +111,26 @@ function createResourceSyncPlugin(getResources: GetResources, options: ResourceS
 			if (key === "") {
 				if (changedText === undefined) {
 					this.lastKey = "";
+					this.clearTimer();
 				}
 				return;
 			}
-			if (keyIncludesAll(this.lastKey, unresolved)) {
+			if (key === this.lastKey) {
 				return;
 			}
 
-			if (this.timer !== undefined) {
-				clearTimeout(this.timer);
-			}
+			this.clearTimer();
 			this.timer = setTimeout(() => {
 				this.timer = undefined;
 				void this.run(view);
 			}, debounceMs);
+		}
+
+		private clearTimer() {
+			if (this.timer !== undefined) {
+				clearTimeout(this.timer);
+				this.timer = undefined;
+			}
 		}
 
 		private async run(view: EditorView) {
