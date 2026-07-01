@@ -42,6 +42,10 @@ function unresolvedKey(uris: string[]): string {
 	return [...uris].sort().join("\n");
 }
 
+function hasResourceMention(text: string): boolean {
+	return !matchAllURIs(text).next().done;
+}
+
 function changedLineText(update: ViewUpdate): { before: string; after: string } {
 	const before: string[] = [];
 	const after: string[] = [];
@@ -82,7 +86,7 @@ function createResourceSyncPlugin(getResources: GetResources, options: ResourceS
 		update(update: ViewUpdate) {
 			if (update.docChanged) {
 				const changedText = changedLineText(update);
-				if (changedText.before.includes("://")) {
+				if (hasResourceMention(changedText.before)) {
 					this.maybeSchedule(update.view);
 					return;
 				}
@@ -97,8 +101,7 @@ function createResourceSyncPlugin(getResources: GetResources, options: ResourceS
 
 		private maybeSchedule(view: EditorView, changedText?: string) {
 			const text = changedText ?? view.state.doc.toString();
-			// Cheap pre-filter: a URI always contains "://".
-			if (!text.includes("://")) {
+			if (!hasResourceMention(text)) {
 				if (changedText === undefined) {
 					this.lastKey = "";
 					this.clearTimer();

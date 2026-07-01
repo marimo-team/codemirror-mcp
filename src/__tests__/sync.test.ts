@@ -170,6 +170,33 @@ describe("resourceSync", () => {
 		}
 	});
 
+	test("does not stringify the whole document for ordinary URL edits", async () => {
+		const getResources = vi.fn(() => [repo1]);
+		mount("see https://example.com", getResources);
+		await new Promise((resolve) => setTimeout(resolve, 5));
+
+		const textPrototype = Object.getPrototypeOf(view.state.doc) as {
+			toString(): string;
+		};
+		const toStringSpy = vi.spyOn(textPrototype, "toString");
+
+		try {
+			view.dispatch({
+				changes: {
+					from: view.state.doc.length,
+					to: view.state.doc.length,
+					insert: "/docs",
+				},
+			});
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
+			expect(toStringSpy).not.toHaveBeenCalled();
+			expect(getResources).not.toHaveBeenCalled();
+		} finally {
+			toStringSpy.mockRestore();
+		}
+	});
+
 	test("uses the targeted resolve option instead of the full catalog", async () => {
 		const getResources = vi.fn(() => [repo1, repo2]);
 		const resolve = vi.fn((uris: string[]) => [repo1, repo2].filter((r) => uris.includes(r.uri)));
