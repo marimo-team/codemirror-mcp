@@ -142,6 +142,37 @@ describe("resourceSync", () => {
 		expectDecorations(view, 0);
 	});
 
+	test("clears pending work when the unresolved set returns to the last processed key", async () => {
+		vi.useFakeTimers();
+		try {
+			const getResources = vi.fn(() => [repo1]);
+			const state = EditorState.create({
+				doc: "@unknown://x",
+				extensions: [
+					resourcesField,
+					resourceDecorations,
+					resourceSync(getResources, { debounceMs: 50 }),
+				],
+			});
+			view = new EditorView({ state });
+
+			await vi.advanceTimersByTimeAsync(50);
+			expect(getResources).toHaveBeenCalledTimes(1);
+
+			view.dispatch({
+				changes: { from: 0, to: view.state.doc.length, insert: "@unknown://y" },
+			});
+			view.dispatch({
+				changes: { from: 0, to: view.state.doc.length, insert: "@unknown://x" },
+			});
+
+			await vi.advanceTimersByTimeAsync(50);
+			expect(getResources).toHaveBeenCalledTimes(1);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	test("does not stringify the whole document for plain text edits", async () => {
 		const getResources = vi.fn(() => [repo1]);
 		const longDoc = Array.from({ length: 1000 }, (_, i) => `plain line ${i}`).join("\n");
@@ -266,6 +297,34 @@ describe("resourceSync", () => {
 		resolvers[resolvers.length - 1]();
 
 		await vi.waitFor(() => expectDecorations(view, 2));
+	});
+
+	test("re-checks changed unresolved set when an in-flight fetch resolves empty", async () => {
+		let resolveFirst: (() => void) | undefined;
+		const getResources = vi
+			.fn<() => Promise<Resource[]>>()
+			.mockImplementationOnce(
+				() =>
+					new Promise<Resource[]>((resolve) => {
+						resolveFirst = () => resolve([]);
+					}),
+			)
+			.mockResolvedValue([repo1]);
+		mount("@unknown://x", getResources);
+
+		await vi.waitFor(() => expect(getResources).toHaveBeenCalledTimes(1));
+
+		view.dispatch({
+			changes: {
+				from: view.state.doc.length,
+				to: view.state.doc.length,
+				insert: " @github://repo1",
+			},
+		});
+		resolveFirst?.();
+
+		await vi.waitFor(() => expectDecorations(view, 1));
+		expect(getResources).toHaveBeenCalledTimes(3);
 	});
 
 	test("logs when resolution throws", async () => {

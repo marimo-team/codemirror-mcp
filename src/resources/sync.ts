@@ -119,6 +119,7 @@ function createResourceSyncPlugin(getResources: GetResources, options: ResourceS
 				return;
 			}
 			if (key === this.lastKey) {
+				this.clearTimer();
 				return;
 			}
 
@@ -169,6 +170,9 @@ function createResourceSyncPlugin(getResources: GetResources, options: ResourceS
 					const resolved = fresh.filter((resource) => wanted.has(resource.uri));
 					if (resolved.length === 0) {
 						// Nothing resolvable right now; stop retrying this set.
+						if (this.rerun) {
+							continue;
+						}
 						break;
 					}
 
