@@ -5,8 +5,7 @@ on:
     branches:
       - main
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   build:
@@ -38,6 +37,8 @@ jobs:
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
           path: './demo/dist'
+    permissions:
+      contents: read
 
   deploy:
     name: 🚀 Deploy

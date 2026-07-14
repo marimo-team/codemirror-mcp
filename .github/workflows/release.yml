@@ -1,7 +1,6 @@
 name: Release
 
-permissions:
-  contents: read
+permissions: {}
 
 on:
   push:
@@ -72,6 +71,8 @@ jobs:
             LICENSE
           retention-days: 1
           if-no-files-found: error
+    permissions:
+      contents: read
 
   publish:
     needs: build
@@ -130,3 +131,5 @@ jobs:
           status: ${{ (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) && 'failure' || 'success' }}
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL_RELEASES }}
           artifact-url: "https://npmjs.com/package/@marimo-team/codemirror-mcp"
+    permissions:
+      contents: read
