@@ -14,7 +14,7 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-p-small
+    runs-on: "${{ vars.CI_RUNNER_SMALL || 'ubuntu-latest' }}"
 
     permissions:
       contents: read
@@ -51,7 +51,7 @@ jobs:
           pr-number: auto
 
   security:
-    runs-on: ubuntu-p-small
+    runs-on: "${{ vars.CI_RUNNER_SMALL || 'ubuntu-latest' }}"
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
@@ -65,7 +65,7 @@ jobs:
 
 
   spelling:
-    runs-on: ubuntu-p-small
+    runs-on: "${{ vars.CI_RUNNER_SMALL || 'ubuntu-latest' }}"
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
