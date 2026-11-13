@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-p-small
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
@@ -76,7 +76,7 @@ jobs:
 
   publish:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-p-small
     permissions:
       id-token: write
       contents: read
@@ -102,7 +102,7 @@ jobs:
 
   release-notes:
     needs: publish
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-p-small
     permissions:
       contents: write
     steps:
@@ -123,7 +123,7 @@ jobs:
   notify:
     needs: [build, publish, release-notes]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-p-small
     steps:
       - name: 📣 Notify release result
         uses: marimo-team/internal-gh-actions/release-notification@ba06d4db1f3c5c9b86983ce409e57196f8376777 # main
