@@ -48,15 +48,9 @@ Types:
 - test: Adding or updating tests
 - chore: Changes to build process or auxiliary tools
 
-## Release Process
+## Releases
 
-For maintainers only:
-
-```bash
-git checkout main
-git pull
-npx bumpp --no-git-check=false
-```
+See [Releases](RELEASING.md) to request, review, and publish a version through a release PR.
 
 ## Questions?
 
