@@ -50,7 +50,7 @@ Types:
 
 ## Releases
 
-See [Releases](RELEASING.md) to request, review, and publish a version through a release PR.
+See [Releases](RELEASING.md) for the release PR workflow.
 
 ## Questions?
 
