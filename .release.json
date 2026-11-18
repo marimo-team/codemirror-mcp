@@ -1,0 +1,9 @@
+{
+	"repository": "marimo-team/codemirror-mcp",
+	"files": ["package.json"],
+	"command": ["pnpm", "release"],
+	"docs": "RELEASING.md",
+	"checks": [["pnpm", "install", "--lockfile-only", "--frozen-lockfile", "--ignore-scripts"]],
+	"manifest": "package.json",
+	"prepare": ["npm", "version", "--no-git-tag-version", "--ignore-scripts", "--package-lock=false"]
+}

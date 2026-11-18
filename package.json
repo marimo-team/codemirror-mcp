@@ -21,7 +21,7 @@
     "demo": "vite build",
     "build": "tsc",
     "prepublishOnly": "pnpm run typecheck && pnpm run test && pnpm run build",
-    "release": "pnpm version",
+    "release": "bash scripts/release.sh",
     "pre-commit": "lint-staged"
   },
   "keywords": [
