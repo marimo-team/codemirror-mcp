@@ -51,6 +51,9 @@ jobs:
           pr-number: auto
 
   security:
+    permissions:
+      contents: read
+      security-events: write
     runs-on: "${{ vars.CI_RUNNER_SMALL || 'ubuntu-latest' }}"
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
